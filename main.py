@@ -41,7 +41,12 @@ if __name__=='__main__':
 
     def building_cost (s,x) :
         """s est le numero du site """
-        pass
+        if (x[0][s-1] == 1) :
+            return parameters["buildingCosts"]["productionCenter"] + x[2][s-1] * parameters["buildingCosts"]["automationPenalty"]
+        elif(x[1][s-1] == 1) :
+            return parameters["buildingCosts"]["distributionCenter"]
+        else :
+            return 0
 
     def production_cost (i,x) :
         """i est le numero du client """
@@ -75,16 +80,30 @@ if __name__=='__main__':
             return float('inf')
 
     def capacity_cost (s,x) :
-        pass
+        if (x[0][s-1] == 1):
+            value = 0
+            for i in range (nb_client):
+                if(x[4][i-1] == s or x[3][x[4][i-1]] == s):
+                    value += clients[i-1]["demand"]
+            value -= (parameters["capacities"]["productionCenter"] + x[2][s-1] * parameters["capacities"]["automationBonus"])
+            value_max = max(0,value * parameters["capacityCost"])
+            return value_max
+        else:
+            return 0
 
     def total_cost(x):
-        for s in range(1,nb_site+1):
-            return
+        cost = 0
+        for site in sites:
+            s = site["id"]
+            cost += building_cost(s,x)+capacity_cost(s,x)
+        for client in clients:
+            i = client["id"]
+            cost += production_cost(i,x) + routing_cost(i,x)
 
 
     print("nb_clients = ",nb_client)
     print("nb_sites = ", nb_site)
-
+    total_cost(2)
 
 
 
