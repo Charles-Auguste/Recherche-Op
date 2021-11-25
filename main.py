@@ -61,7 +61,7 @@ if __name__=='__main__':
                    (parameters["routingCosts"]["primary"]*siteClientDistances[x[4][i-1]][x[3][x[4][i-1]]]+
                    parameters["routingCosts"]["secondary"]*siteClientDistances[x[4][i-1]][i-1])
         else:
-            return 
+            return float('inf')
 
     def capacity_cost (s,x) :
         pass
