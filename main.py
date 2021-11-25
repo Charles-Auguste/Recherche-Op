@@ -61,9 +61,9 @@ if __name__=='__main__':
         '''DANGER: On suppose que les clients sont ordonnés dans l'ordre des indices dans clients
         i: numéro du client
         x: solution au format liste de liste décrit plus haut'''
-        if x[0][i-1]:
+        if x[0][x[4][i-1]]:
             return parameters["routingCosts"]["secondary"]*(siteClientDistances[x[4][i-1]][i-1])
-        elif x[1][i-1]:
+        elif x[1][x[4][i-1]]:
             return clients[i-1]["demand"]*\
                    (parameters["routingCosts"]["primary"]*siteClientDistances[x[4][i-1]][x[3][x[4][i-1]]]+
                    parameters["routingCosts"]["secondary"]*siteClientDistances[x[4][i-1]][i-1])
@@ -121,7 +121,7 @@ if __name__=='__main__':
 
     x = [[0,1],[0,0],[0,0],[0,0],[1,1,1]]
     print(check_constraint(x))
-
+    print(total_cost(x))
 
 
 
