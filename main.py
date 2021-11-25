@@ -62,7 +62,7 @@ if __name__=='__main__':
         i: numéro du client
         x: solution au format liste de liste décrit plus haut'''
         if x[0][x[4][i-1]]:
-            return parameters["routingCosts"]["secondary"]*(siteClientDistances[x[4][i-1]][i-1])
+            return clients[i-1]["demand"]*parameters["routingCosts"]["secondary"]*(siteClientDistances[x[4][i-1]][i-1])
         elif x[1][x[4][i-1]]:
             return clients[i-1]["demand"]*\
                    (parameters["routingCosts"]["primary"]*siteClientDistances[x[4][i-1]][x[3][x[4][i-1]]]+
