@@ -11,5 +11,15 @@ def read_data(file_name):
 
     return param_dict,clients_dict,sites_dict, siteSiteDistances_dict, siteClientDistances_dict
 
-
+def encode_x(x):
+    '''Transforme une liste de listes x au format dictionnaire'''
+    rep={"productionCenters":[],"distributionCenters":[],"clients":[]}
+    for i in range(len(x[0])):
+        if x[0][i]:
+            rep["productionCenters"].append({"id":i+1,"automation":x[2][i]})
+        elif x[1][i]:
+            rep["distributionCenters"].append({"id":i+1,"parent":x[3][i]+1})
+    for i in range(len(x[4])):
+        rep["clients"].append({"id":i+1,"parent":x[4][i]+1})
+    return rep
 
