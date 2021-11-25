@@ -28,6 +28,17 @@ if __name__=='__main__':
     nb_client = len(clients)
     nb_site = len(sites)
 
+    def encode_x(x):
+        rep={"productionCenters":[],"distributionCenters":[],"clients":[]}
+        for i in range(len(x[0])):
+            if x[0][i]:
+                rep["productionCenters"].append({"id":i+1,"automation":x[2][i]})
+            elif x[1][i]:
+                rep["distributionCenters"].append({"id":i+1,"parent":x[3][i]+1})
+        for i in range(len(x[4])):
+            rep["clients"].append({"id":i+1,"parent":x[4][i]+1})
+        return rep
+
     def building_cost (s,x) :
         """s est le numero du site """
         pass
