@@ -40,16 +40,16 @@ if __name__=='__main__':
     def production_cost (i,x) :
         """i est le numero du client """
         # if parent = producter
-        if(x[0][x[5][i-1]] == 1):
+        if(x[0][x[4][i-1]] == 1):
             # i+1 car les id start a 0 et nos listes a 0
-            # x[3][x[5][i-1]] producter automatise?
+            # x[2][x[4][i-1]] producter automatise?
             auto = x[2][x[4][i-1]]
             cost = clients[i-1]["demand"]*parameters["productionCosts"]["productionCenter"]-auto*parameters["productionCosts"]["automationBonus"]
             return cost
         # if parent = distrib
         elif(x[1][x[4][i-1]] == 1):
-            # x[0][x[4][x[5][i-1]]] parent du distrib automatise?
-            auto = x[0][x[3][x[4][i-1]]]
+            # x[2][x[3][x[4][i-1]]] parent du distrib automatise?
+            auto = x[2][x[3][x[4][i-1]]]
             cost = clients[i - 1]["demand"] * parameters["productionCosts"]["productionCenter"] - auto * parameters["productionCosts"]["automationBonus"] + parameters["productionCosts"]["distributionCenter"]
             return cost
         else:
