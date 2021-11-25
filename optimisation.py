@@ -1,6 +1,6 @@
 import numpy as np
 
-def genere_sol_admissible():
+def genere_sol_admissible(parameters,clients,sites,sitrSiteDistances,siteClientDistances):
     pass
 
 def heuristique1(parameters, clients, sites, siteSiteDistances, siteClientDistances):
