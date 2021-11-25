@@ -21,6 +21,7 @@ def genere_sol_admissible(clients,sites):
     if not len(listeusine):
         r=np.random.randint(len(x[0]))
         listeusine.append(r)
+        listesiteson.append(r)
         x[1][r]=0
         x[0][r]=1
     for i in range(len(x[0])):
