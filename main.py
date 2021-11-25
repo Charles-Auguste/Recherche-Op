@@ -7,8 +7,7 @@ import optimisation as op
 
 if __name__=='__main__':
 
-    file_name = "KIRO-tiny.json"
-    parameters, clients, sites, siteSiteDistances, siteClientDistances = jr.read_data(file_name)
+    parameters, clients, sites, siteSiteDistances, siteClientDistances = jr.read_data(op.file_name)
 
     # Structure de x
 

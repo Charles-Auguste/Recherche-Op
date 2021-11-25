@@ -31,6 +31,7 @@ def genere_sol_admissible(clients,sites):
         x[4][i]=r
     return x
 
+file_name="KIRO-tiny.json"
 parameters, clients, sites, siteSiteDistances, siteClientDistances = jr.read_data(file_name)
 nb_client = len(clients)
 nb_site = len(sites)
