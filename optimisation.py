@@ -1,5 +1,7 @@
 import numpy as np
 
+def genere_sol_admissible():
+    pass
 
 def heuristique1(parameters, clients, sites, siteSiteDistances, siteClientDistances):
     print("nb_clients = ", nb_client)
