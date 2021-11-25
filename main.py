@@ -1,6 +1,7 @@
 import pulp
 import json
 import json_reader as jr
+import numpy as np
 
 
 if __name__=='__main__':
@@ -101,8 +102,14 @@ if __name__=='__main__':
     print(sol)
 
 
-    def glouton1():
-        for i in range(nb_client):
-            for j in range(nb_site):
-                siteClientDistances[]
+    def heuristique1():
+        min = 100000000000000000
+        j_choice_to_construct = 0
+        for j in range(nb_site):
+             # if la distance moyenne d'un site est plus petite que la moyenne on prend ce site
+             dist_moy = np.abs(np.mean(siteClientDistances[:,j]))
+             if (dist_moy < min):
+                 min = dist_moy
+                 j_choice_to_construct = j
+        return 0
 
