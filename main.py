@@ -38,17 +38,17 @@ if __name__=='__main__':
         if(x[0][x[5][i-1]] == 1):
             # i+1 car les id start a 0 et nos listes a 0
             # x[3][x[5][i-1]] producter automatise?
-            auto = x[3][x[5][i-1]]
+            auto = x[2][x[4][i-1]]
             cost = clients[i-1]["demand"]*parameters["productionCosts"]["productionCenter"]-auto*parameters["productionCosts"]["automationBonus"]
             return cost
         # if parent = distrib
-        elif(x[1][x[5][i-1]] == 1):
+        elif(x[1][x[4][i-1]] == 1):
             # x[0][x[4][x[5][i-1]]] parent du distrib automatise?
-            auto = x[0][x[4][x[5][i-1]]]
+            auto = x[0][x[3][x[4][i-1]]]
             cost = clients[i - 1]["demand"] * parameters["productionCosts"]["productionCenter"] - auto * parameters["productionCosts"]["automationBonus"] + parameters["productionCosts"]["distributionCenter"]
             return cost
         else:
-            return 0
+            return float('inf')
 
     def routing_cost (i,x) :
         '''DANGER: On suppose que les clients sont ordonnés dans l'ordre des indices dans clients
@@ -65,6 +65,11 @@ if __name__=='__main__':
 
     def capacity_cost (s,x) :
         pass
+
+    def total_cost(x):
+        for s in range(1,nb_site+1):
+            return
+
 
     print("nb_clients = ",nb_client)
     print("nb_sites = ", nb_site)
