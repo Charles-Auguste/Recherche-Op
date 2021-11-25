@@ -25,7 +25,11 @@ if __name__=='__main__':
     # production[client[i]] + distribution[client[i]] =1
     # tout >=0
 
+    nb_client = len(clients)
+    nb_site = len(sites)
+
     def building_cost (s,x) :
+        """s est le numero du site """
         pass
 
     def production_cost (i,x) :
@@ -37,7 +41,8 @@ if __name__=='__main__':
     def capacity_cost (s,x) :
         pass
 
-
+    print("nb_clients = ",nb_client)
+    print("nb_sites = ", nb_site)
 
 
 
