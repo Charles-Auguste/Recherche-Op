@@ -6,23 +6,23 @@ def genere_sol_admissible(clients,sites):
     nb_site = len(sites)
     x = [[0 for i in range(nb_site)], [0 for i in range(nb_site)], [0 for i in range(nb_site)],
          [0 for i in range(nb_site)], [0 for i in range(nb_client)]]
+    listeusine=[]
+    listesiteson=[]
     for i in range(len(x[0])):
         r=np.random.randint(-1,2)
         if r>=0:
             x[r][i]=1
+            listesiteson.append(i)
             if r==0:
+                listeusine.append(i)
                 q=np.random.randint(0,2)
                 if q:
                     x[2][i]=1
     for i in range(len(x[0])):
-        r = np.random.randint(0,len(x[0]))
-        while not x[0][r]:
-            r = np.random.randint(0,len(x[0]))
+        r = np.random.choice(listeusine)
         x[3][i]=r
     for i in range(len(x[4])):
-        r = np.random.randint(0,len(x[0]))
-        while (not x[0][r]) and (not x[1][r]):
-            r = np.random.randint(0,len(x[0]))
+        r = np.random.choice(listesiteson)
         x[4][i]=r
     return x
 
