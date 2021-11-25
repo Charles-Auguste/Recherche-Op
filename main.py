@@ -100,7 +100,7 @@ if __name__=='__main__':
     def check_constraint(x):
         if nb_client!=len(x[4]):
             return False
-        if nb_site!=len(x[0]) or nb_site!=len(x[1]):
+        if nb_site!=len(x[0]) or nb_site!=len(x[1]) or nb_site!=len(x[2]) or nb_site!=len(x[3]):
             return False
         for i in range (nb_site) :
             # tout est positif

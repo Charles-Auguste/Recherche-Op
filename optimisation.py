@@ -1,7 +1,8 @@
 import numpy as np
 
 def genere_sol_admissible(parameters,clients,sites,sitrSiteDistances,siteClientDistances):
-    pass
+    x = [[0 for i in range(nb_site)], [0 for i in range(nb_site)], [0 for i in range(nb_site)],
+         [0 for i in range(nb_site)], [0 for i in range(nb_client)]]
 
 def heuristique1(parameters, clients, sites, siteSiteDistances, siteClientDistances):
     nb_client = len(clients)
