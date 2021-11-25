@@ -44,14 +44,14 @@ if __name__=='__main__':
         # if parent = producter
         if(x[0][x[4][i-1]] == 1):
             # i+1 car les id start a 0 et nos listes a 0
-            # x[2][x[4][i-1]] producter automatise?
+            # x[3][x[5][i-1]] producter automatise?
             auto = x[2][x[4][i-1]]
             cost = clients[i-1]["demand"]*parameters["productionCosts"]["productionCenter"]-auto*parameters["productionCosts"]["automationBonus"]
             return cost
         # if parent = distrib
         elif(x[1][x[4][i-1]] == 1):
-            # x[2][x[3][x[4][i-1]]] parent du distrib automatise?
-            auto = x[2][x[3][x[4][i-1]]]
+            # x[0][x[4][x[5][i-1]]] parent du distrib automatise?
+            auto = x[0][x[3][x[4][i-1]]]
             cost = clients[i - 1]["demand"] * parameters["productionCosts"]["productionCenter"] - auto * parameters["productionCosts"]["automationBonus"] + parameters["productionCosts"]["distributionCenter"]
             return cost
         else:
@@ -90,11 +90,10 @@ if __name__=='__main__':
         for client in clients:
             i = client["id"]
             cost += production_cost(i,x) + routing_cost(i,x)
-
+        return cost
 
     print("nb_clients = ",nb_client)
     print("nb_sites = ", nb_site)
-
 
     def check_constraint(x):
         for i in range (nb_site) :
@@ -107,14 +106,17 @@ if __name__=='__main__':
             # on n'automatise pas une usine qui n'existe pas
             elif (x[2][i] > x[0][i]) :
                 return False
-            #
+            # un site de distribution doit avoir un parent de production
             elif (x[0][x[3][i]] == 0 and x[1][i] == 1) :
                 return False
+            # un site de distribution ne peut pas avoir de parents dans distribution
             elif (x[1][x[3][i]] == 1) :
                 return False
+            # un client doit etre servis par un seul centre
             elif (x[1][x[4][i]] + x[0][x[4][i]] !=1) :
                 return False
         for i in range(nb_client) :
+            # tout est positif
             if (x[4][i] <= 0) :
                 return False
         return True
@@ -123,16 +125,8 @@ if __name__=='__main__':
     print(check_constraint(x))
     print(total_cost(x))
 
+    sol = jr.encode_x(x)
+    jr.write_data(sol, "tiny_sol.json")
 
 
-    def heuristique1():
-        min = 100000000000000000
-        j_choice_to_construct = 0
-        for j in range(nb_site):
-             # if la distance moyenne d'un site est plus petite que la moyenne on prend ce site
-             dist_moy = np.abs(np.mean(siteClientDistances[:,j]))
-             if (dist_moy < min):
-                 min = dist_moy
-                 j_choice_to_construct = j
-        return 0
 
