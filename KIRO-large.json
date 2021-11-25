@@ -11,14 +11,14 @@
             "distributionCenter": 2.0
         },
         "routingCosts": {
-            "primary": 0.015,
-            "secondary": 3.63
+            "primary": 0.0075,
+            "secondary": 0.11
         },
+        "capacityCost": 1000.0,
         "capacities": {
-            "productionCenter": 750000.0,
-            "automationBonus": 225000.0
-        },
-        "capacityCost": 1000
+            "productionCenter": 1250000,
+            "automationBonus": 1250000
+        }
     },
     "clients": [
         {
