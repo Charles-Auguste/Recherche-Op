@@ -109,6 +109,45 @@ def total_cost(x):
         cost += production_cost(i, x) + routing_cost(i, x)
     return cost
 
+def check_constraint(x):
+    if nb_client!=len(x[4]):
+        print('longueur')
+        return False
+    if nb_site!=len(x[0]) or nb_site!=len(x[1]) or nb_site!=len(x[2]) or nb_site!=len(x[3]):
+        print('longueur')
+        return False
+    for i in range (nb_site) :
+        # tout est positif
+        if (x[0][i] < 0 or x[1][i] < 0 or x[2][i] < 0 or x[3][i] < 0):
+            print('domain (<0 facility)')
+            return False
+        if (x[0][i] > 1 or x[1][i] > 1 or x[2][i] > 1):
+            print('domain (>1 facility)')
+            return False
+        # 1 site est occupé par une seule usine
+        elif (x[0][i] + x[1][i] > 1):
+            print('multiple facilities in one place')
+            return False
+        # on n'automatise pas une usine qui n'existe pas
+        elif (x[2][i] > x[0][i]) :
+            print('no factory to automate')
+            return False
+        #
+        elif (x[0][x[3][i]] == 0 and x[1][i] == 1) :
+            print('unconnected distrib')
+            return False
+        elif (x[1][x[3][i]] == 1) :
+            print('parent of facility is distrib')
+            return False
+        elif (x[1][x[4][i]] + x[0][x[4][i]] !=1) :
+            print('0 or multiple parent facilities for client')
+            return False
+    for i in range(nb_client) :
+        if (x[4][i] < 0) :
+            print('domain (<0 client)')
+            return False
+    return True
+
 
 def heuristique1():
     x = [[0 for i in range(nb_site)],[0 for i in range(nb_site)], [0 for i in range(nb_site)], [0 for i in range(nb_site)], [0 for i in range(nb_client)]]
