@@ -48,7 +48,7 @@ if __name__=='__main__':
             cost = clients[i - 1]["demand"] * parameters["productionCosts"]["productionCenter"] - auto * parameters["productionCosts"]["automationBonus"] + parameters["productionCosts"]["distributionCenter"]
             return cost
         else:
-            return 0
+            return float('inf')
 
     def routing_cost (i,x) :
         '''DANGER: On suppose que les clients sont ordonnés dans l'ordre des indices dans clients
