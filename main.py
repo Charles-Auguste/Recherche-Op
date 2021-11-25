@@ -30,7 +30,12 @@ if __name__=='__main__':
 
     def building_cost (s,x) :
         """s est le numero du site """
-        pass
+        if (x[0][s-1] == 1) :
+            return parameters["buildingCosts"]["productionCenter"] + x[2][s-1] * parameters["buildingCosts"]["automationPenalty"]
+        elif(x[1][s-1] == 1) :
+            return parameters["buildingCosts"]["distributionCenter"]
+        else :
+            return 0
 
     def production_cost (i,x) :
         """i est le numero du client """
