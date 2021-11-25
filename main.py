@@ -1,6 +1,7 @@
 import pulp
 import json
 import json_reader as jr
+import numpy as np
 
 
 if __name__=='__main__':
@@ -40,16 +41,16 @@ if __name__=='__main__':
     def production_cost (i,x) :
         """i est le numero du client """
         # if parent = producter
-        if(x[0][x[4][i-1]] == 1):
+        if(x[0][x[5][i-1]] == 1):
             # i+1 car les id start a 0 et nos listes a 0
-            # x[2][x[4][i-1]] producter automatise?
+            # x[3][x[5][i-1]] producter automatise?
             auto = x[2][x[4][i-1]]
             cost = clients[i-1]["demand"]*parameters["productionCosts"]["productionCenter"]-auto*parameters["productionCosts"]["automationBonus"]
             return cost
         # if parent = distrib
         elif(x[1][x[4][i-1]] == 1):
-            # x[2][x[3][x[4][i-1]]] parent du distrib automatise?
-            auto = x[2][x[3][x[4][i-1]]]
+            # x[0][x[4][x[5][i-1]]] parent du distrib automatise?
+            auto = x[0][x[3][x[4][i-1]]]
             cost = clients[i - 1]["demand"] * parameters["productionCosts"]["productionCenter"] - auto * parameters["productionCosts"]["automationBonus"] + parameters["productionCosts"]["distributionCenter"]
             return cost
         else:
@@ -93,28 +94,21 @@ if __name__=='__main__':
     print("nb_clients = ",nb_client)
     print("nb_sites = ", nb_site)
 
-    def check_constraint(x):
-        for i in range (nb_site) :
-            if (x[0][i] < 0 or x[1][i] < 0 or x[2][i] < 0 or x[3][i] < 0):
-                return False
-            elif (x[0][i] + x[1][i] > 1):
-                return False
-            elif (x[2][i] > x[0][i]) :
-                return False
-            elif (x[0][x[3][i]] == 0) :
-                return False
-            elif (x[1][x[3][i]] == 1) :
-                return False
-            elif (x[1][x[4][i]] + x[0][x[4][i]] !=1) :
-                return False
-        for i in range(nb_client) :
-            if (x[4][i] <= 0) :
-                return False
-        return True
-
-    total_cost(2)
+    x = [[0,1],[0,0],[0,0],[0,0],[1,1,1]]
+    sol = jr.encode_x(x)
+    jr.write_data(sol, "tiny_sol.json")
 
 
 
 
+    def heuristique1():
+        min = 100000000000000000
+        j_choice_to_construct = 0
+        for j in range(nb_site):
+             # if la distance moyenne d'un site est plus petite que la moyenne on prend ce site
+             dist_moy = np.abs(np.mean(siteClientDistances[:,j]))
+             if (dist_moy < min):
+                 min = dist_moy
+                 j_choice_to_construct = j
+        return 0
 
