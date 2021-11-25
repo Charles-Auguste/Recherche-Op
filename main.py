@@ -81,13 +81,18 @@ if __name__=='__main__':
             return 0
 
     def total_cost(x):
-        for s in range(1,nb_site+1):
-            return
+        cost = 0
+        for site in sites:
+            s = site["id"]
+            cost += building_cost(s,x)+capacity_cost(s,x)
+        for client in clients:
+            i = client["id"]
+            cost += production_cost(i,x) + routing_cost(i,x)
 
 
     print("nb_clients = ",nb_client)
     print("nb_sites = ", nb_site)
-
+    total_cost(2)
 
 
 
