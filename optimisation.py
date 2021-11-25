@@ -1,7 +1,7 @@
 import numpy as np
 import json_reader as jr
 
-def genere_sol_admissible(parameters,clients,sites,siteSiteDistances,siteClientDistances):
+def genere_sol_admissible(clients,sites):
     nb_client = len(clients)
     nb_site = len(sites)
     x = [[0 for i in range(nb_site)], [0 for i in range(nb_site)], [0 for i in range(nb_site)],
