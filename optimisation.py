@@ -1,12 +1,89 @@
 import numpy as np
+import json_reader as jr
 
 def genere_sol_admissible(parameters,clients,sites,sitrSiteDistances,siteClientDistances):
     x = [[0 for i in range(nb_site)], [0 for i in range(nb_site)], [0 for i in range(nb_site)],
          [0 for i in range(nb_site)], [0 for i in range(nb_client)]]
+file_name = "KIRO-tiny.json"
+parameters, clients, sites, siteSiteDistances, siteClientDistances = jr.read_data(file_name)
+nb_client = len(clients)
+nb_site = len(sites)
 
-def heuristique1(parameters, clients, sites, siteSiteDistances, siteClientDistances):
-    nb_client = len(clients)
-    nb_site = len(sites)
+def building_cost(s, x):
+    """s est le numero du site """
+    if (x[0][s - 1] == 1):
+        return parameters["buildingCosts"]["productionCenter"] + x[2][s - 1] * parameters["buildingCosts"][
+            "automationPenalty"]
+    elif (x[1][s - 1] == 1):
+        return parameters["buildingCosts"]["distributionCenter"]
+    else:
+        return 0
+
+
+def production_cost(i, x):
+    """i est le numero du client """
+    # if parent = producter
+    if (x[0][x[4][i - 1]] == 1):
+        # i+1 car les id start a 0 et nos listes a 0
+        # x[2][x[4][i-1]] producter automatise?
+        auto = x[2][x[4][i - 1]]
+        cost = clients[i - 1]["demand"] * (
+                    parameters["productionCosts"]["productionCenter"] - auto * parameters["productionCosts"][
+                "automationBonus"])
+        return cost
+    # if parent = distrib
+    elif (x[1][x[4][i - 1]] == 1):
+        # x[2][x[3][x[4][i-1]]] parent du distrib automatise?
+        auto = x[2][x[3][x[4][i - 1]]]
+        cost = clients[i - 1]["demand"] * (
+                    parameters["productionCosts"]["productionCenter"] - auto * parameters["productionCosts"][
+                "automationBonus"] + parameters["productionCosts"]["distributionCenter"])
+        return cost
+    else:
+        return float('inf')
+
+
+def routing_cost(i, x):
+    '''DANGER: On suppose que les clients sont ordonnés dans l'ordre des indices dans clients
+    i: numéro du client
+    x: solution au format liste de liste décrit plus haut'''
+    if x[0][x[4][i - 1]]:
+        return clients[i - 1]["demand"] * parameters["routingCosts"]["secondary"] * (
+        siteClientDistances[x[4][i - 1]][i - 1])
+    elif x[1][x[4][i - 1]]:
+        return clients[i - 1]["demand"] * \
+               (parameters["routingCosts"]["primary"] * siteClientDistances[x[4][i - 1]][x[3][x[4][i - 1]]] +
+                parameters["routingCosts"]["secondary"] * siteClientDistances[x[4][i - 1]][i - 1])
+    else:
+        return float('inf')
+
+
+def capacity_cost(s, x):
+    if (x[0][s - 1] == 1):
+        value = 0
+        for i in range(nb_client):
+            if (x[4][i - 1] == s or x[3][x[4][i - 1]] == s):
+                value += clients[i - 1]["demand"]
+        value -= (parameters["capacities"]["productionCenter"] + x[2][s - 1] * parameters["capacities"][
+            "automationBonus"])
+        value_max = max(0, value * parameters["capacityCost"])
+        return value_max
+    else:
+        return 0
+
+
+def total_cost(x):
+    cost = 0
+    for site in sites:
+        s = site["id"]
+        cost += building_cost(s, x) + capacity_cost(s, x)
+    for client in clients:
+        i = client["id"]
+        cost += production_cost(i, x) + routing_cost(i, x)
+    return cost
+
+
+def heuristique1():
     x = [[0 for i in range(nb_site)],[0 for i in range(nb_site)], [0 for i in range(nb_site)], [0 for i in range(nb_site)], [0 for i in range(nb_client)]]
     total_demand = 0
     for client in clients:
@@ -24,5 +101,14 @@ def heuristique1(parameters, clients, sites, siteSiteDistances, siteClientDistan
                 if(j not in j_used):
                     j_choice_to_construct = j
                     j_used.append(j)
-    x[0][j]
+    for j in j_used:
+        x[0][j] = 1
+    dist_usines_ouvertes = {}
+    for i in range(nb_client):
+        for j in j_used:
+            dist_usines_ouvertes[str(j)] = siteClientDistances[i][j]
+        usine_plus_proche = int(max(dist_usines_ouvertes, key=dist_usines_ouvertes.get))
+
+
+
     return 0
