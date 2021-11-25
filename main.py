@@ -92,9 +92,17 @@ if __name__=='__main__':
 
     print("nb_clients = ",nb_client)
     print("nb_sites = ", nb_site)
-    total_cost(2)
+
+    x = [[0,1],[0,0],[0,0],[0,0],[1,1,1]]
+    sol = jr.encode_x(x)
 
 
 
+    print(sol)
 
+
+    def glouton1():
+        for i in range(nb_client):
+            for j in range(nb_site):
+                siteClientDistances[]
 
