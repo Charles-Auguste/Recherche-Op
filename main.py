@@ -92,6 +92,26 @@ if __name__=='__main__':
 
     print("nb_clients = ",nb_client)
     print("nb_sites = ", nb_site)
+
+    def check_constraint(x):
+        for i in range (nb_site) :
+            if (x[0][i] < 0 or x[1][i] < 0 or x[2][i] < 0 or x[3][i] < 0):
+                return False
+            elif (x[0][i] + x[1][i] > 1):
+                return False
+            elif (x[2][i] > x[0][i]) :
+                return False
+            elif (x[0][x[3][i]] == 0) :
+                return False
+            elif (x[1][x[3][i]] == 1) :
+                return False
+            elif (x[1][x[4][i]] + x[0][x[4][i]] !=1) :
+                return False
+        for i in range(nb_client) :
+            if (x[4][i] <= 0) :
+                return False
+        return True
+
     total_cost(2)
 
 
