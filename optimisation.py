@@ -18,6 +18,11 @@ def genere_sol_admissible(clients,sites):
                 q=np.random.randint(0,2)
                 if q:
                     x[2][i]=1
+    if not len(listeusine):
+        r=np.random.randint(len(x[0]))
+        listeusine.append(r)
+        x[1][r]=0
+        x[0][r]=1
     for i in range(len(x[0])):
         r = np.random.choice(listeusine)
         x[3][i]=r
