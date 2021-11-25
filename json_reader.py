@@ -23,3 +23,7 @@ def encode_x(x):
         rep["clients"].append({"id":i+1,"parent":x[4][i]+1})
     return rep
 
+def write_data(dict,file_name):
+    file=open(file_name,'w')
+    json.dump(dict,file)
+    file.close()
