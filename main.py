@@ -60,6 +60,8 @@ if __name__=='__main__':
             return clients[i-1]["demand"]*\
                    (parameters["routingCosts"]["primary"]*siteClientDistances[x[4][i-1]][x[3][x[4][i-1]]]+
                    parameters["routingCosts"]["secondary"]*siteClientDistances[x[4][i-1]][i-1])
+        else:
+            return 
 
     def capacity_cost (s,x) :
         pass
