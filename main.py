@@ -1,6 +1,7 @@
 import pulp
 import json
 import json_reader as jr
+import numpy as np
 
 
 if __name__=='__main__':
@@ -20,7 +21,8 @@ if __name__=='__main__':
 
     # production[i] + distribution[i] <=1
     # automat[i] <= production[i]
-    # production[parent[i]] = 1
+    # production[parent[i]] = 1 si distribution (qui existe !!!)
+    # production[parent[i]] = 0 si production
     # distribution[parent[i]] = 0
     # production[client[i]] + distribution[client[i]] =1
     # tout >=0
@@ -93,15 +95,20 @@ if __name__=='__main__':
     print("nb_clients = ",nb_client)
     print("nb_sites = ", nb_site)
 
+
     def check_constraint(x):
         for i in range (nb_site) :
+            # tout est positif
             if (x[0][i] < 0 or x[1][i] < 0 or x[2][i] < 0 or x[3][i] < 0):
                 return False
+            # 1 site est occupé par une seule usine
             elif (x[0][i] + x[1][i] > 1):
                 return False
+            # on n'automatise pas une usine qui n'existe pas
             elif (x[2][i] > x[0][i]) :
                 return False
-            elif (x[0][x[3][i]] == 0) :
+            #
+            elif (x[0][x[3][i]] == 0 and x[1][i] == 1) :
                 return False
             elif (x[1][x[3][i]] == 1) :
                 return False
@@ -112,9 +119,20 @@ if __name__=='__main__':
                 return False
         return True
 
-    total_cost(2)
+    x = [[0,1],[0,0],[0,0],[0,0],[1,1,1]]
+    print(check_constraint(x))
 
 
 
 
+    def heuristique1():
+        min = 100000000000000000
+        j_choice_to_construct = 0
+        for j in range(nb_site):
+             # if la distance moyenne d'un site est plus petite que la moyenne on prend ce site
+             dist_moy = np.abs(np.mean(siteClientDistances[:,j]))
+             if (dist_moy < min):
+                 min = dist_moy
+                 j_choice_to_construct = j
+        return 0
 
