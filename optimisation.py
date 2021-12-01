@@ -1,3 +1,9 @@
+#################################################################
+# optimisation.py
+# Authors : Charles-Auguste Gourio, Thomas Risola, Michel Senegas
+# Date : 01/12/2021
+#################################################################
+
 import random
 import numpy as np
 import pulp
@@ -76,3 +82,5 @@ def total_cost(x):
         i = client["id"]
         cost += production_cost(i, x) + routing_cost(i, x)
     return cost
+
+
