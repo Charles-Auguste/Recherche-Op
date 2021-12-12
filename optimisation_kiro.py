@@ -1,5 +1,9 @@
+import random
 import numpy as np
 import json_reader as jr
+import pulp
+import json
+
 
 def genere_sol_admissible(clients,sites):
     nb_client = len(clients)
@@ -32,7 +36,7 @@ def genere_sol_admissible(clients,sites):
         x[4][i]=r
     return x
 
-file_name="KIRO-tiny.json"
+file_name = "KIRO-large.json"
 parameters, clients, sites, siteSiteDistances, siteClientDistances = jr.read_data(file_name)
 nb_client = len(clients)
 nb_site = len(sites)
@@ -84,6 +88,29 @@ def routing_cost(i, x):
                 parameters["routingCosts"]["secondary"] * siteClientDistances[x[4][i - 1]][i - 1])
     else:
         return float('inf')
+
+def check_constraint(x,nb_site, nb_client):
+    for i in range(nb_site):
+        # tout est positif
+        if (x[0][i] < 0 or x[1][i] < 0 or x[2][i] < 0 or x[3][i] < 0):
+            return 1
+        # 1 site est occupé par une seule usine
+        elif (x[0][i] + x[1][i] > 1):
+            return 2
+        # on n'automatise pas une usine qui n'existe pas
+        elif (x[2][i] > x[0][i]):
+            return 3
+        #
+        elif (x[0][x[3][i]] == 0 and x[1][i] == 1):
+            return 4
+        elif (x[1][x[3][i]] == 1):
+            return 5
+        elif (x[1][x[4][i]] + x[0][x[4][i]] != 1):
+            return 6
+    for i in range(nb_client):
+        if (x[4][i] < 0):
+            return 7
+    return 0
 
 
 def capacity_cost(s, x):
@@ -150,32 +177,52 @@ def check_constraint(x):
     return True
 
 
-def heuristique1():
-    x = [[0 for i in range(nb_site)],[0 for i in range(nb_site)], [0 for i in range(nb_site)], [0 for i in range(nb_site)], [0 for i in range(nb_client)]]
-    total_demand = 0
-    for client in clients:
-        demand = client["demand"]
-        total_demand += demand
-    min = 100000000000000000
-    number_of_usine = total_demand / parameters["capacities"]["productionCenter"]
-    j_used = []
-    for i in range(number_of_usine):
-        for j in range(nb_site):
-            # if la distance moyenne d'un site est plus petite que la moyenne on prend ce site
-            dist_moy = np.abs(np.mean(siteClientDistances[:, j]))
-            if (dist_moy < min):
-                min = dist_moy
-                if(j not in j_used):
-                    j_choice_to_construct = j
-                    j_used.append(j)
-    for j in j_used:
-        x[0][j] = 1
-    dist_usines_ouvertes = {}
-    for i in range(nb_client):
-        for j in j_used:
-            dist_usines_ouvertes[str(j)] = siteClientDistances[i][j]
-        usine_plus_proche = int(max(dist_usines_ouvertes, key=dist_usines_ouvertes.get))
-
-
-
-    return 0
+def descente_locale_large(nb_sites, nb_client):
+    # On construit une solution initiale
+    x_init = [[0 for i in range (nb_sites-1)],[0 for i in range (nb_sites)],[0 for i in range (nb_sites)],[0 for i in range (nb_sites)],[nb_sites-1 for i in range(nb_client)]]
+    x_init[0].append(1)
+    if (check_constraint(x_init,nb_sites,nb_client) != 0):
+        print("erreur",check_constraint(x_init,nb_sites,nb_client))
+    count = 0
+    while (count <= 500):
+        x= x_init
+        count += 1
+        n_usine = random.randint(0,nb_sites-1)
+        if (x[0][n_usine] == 0):
+            x[0][n_usine] = 1
+            for i in range (nb_client) :
+                dist = siteClientDistances[0][i]
+                for j in range (nb_sites):
+                    if (x[0][j] == 1):
+                        n_dist = siteClientDistances[j][i]
+                        if (n_dist < dist):
+                            dist = n_dist
+                            x[4][i] = j
+        if (total_cost(x_init) > total_cost(x)):
+            x_init = x
+    count = 0
+    while (count <= 100):
+        x = x_init
+        count += 1
+        hasard = random.randint(1,4)
+        n_usine = random.randint(0, nb_sites - 1)
+        if (hasard == 1):
+            if (x[0][n_usine] == 1):
+                x[0][n_usine] = 0
+                x[1][n_usine] = 1
+                for i in range (nb_sites):
+                    dist=siteSiteDistances[0][i]
+                    for j in range (nb_sites):
+                        n_dist = siteSiteDistances[j][i]
+                        if(n_dist < dist and x[0][j] == 1):
+                            dist = n_dist
+                            x[3][i] = j
+        elif (hasard == 2):
+            if (x[0][n_usine] == 1):
+                x[2][n_usine] = 1
+        elif (hasard == 3):
+            if (x[0][n_usine] == 1):
+                x[2][n_usine] = 0
+        if (total_cost(x_init) > total_cost(x) and check_constraint(x) == 0):
+            x_init = x
+    return(x_init)
