@@ -25,11 +25,21 @@ def encode_x(x):
     rep = {"productionCenters":[],"distributionCenters":[],"clients":[]}
     for i in range(len(x[0])):
         if x[0][i]:
-            rep["productionCenters"].append({"id":i+1,"automation":x[2][i]})
+            rep["productionCenters"].append({"id":i+1,"automation":int(x[2][i])})
         elif x[1][i]:
-            rep["distributionCenters"].append({"id":i+1,"parent":x[3][i]+1})
+            rep["distributionCenters"].append({"id":i+1,"parent":0})
+            count = 1
+            for j in range(len(x[0])):
+                if x[3][i][j]:
+                    rep["distributionCenters"][-1]["parent"] = count
+                count += 1
     for i in range(len(x[4])):
-        rep["clients"].append({"id":i+1,"parent":x[4][i]+1})
+        rep["clients"].append({"id":i+1,"parent":0})
+        count = 1
+        for j in range(len(x[0])):
+            if x[4][i][j]:
+                rep["clients"][-1]["parent"] = count
+            count += 1
     return rep
 
 
