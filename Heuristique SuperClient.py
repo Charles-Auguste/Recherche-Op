@@ -61,7 +61,7 @@ import cout as co
 
 # Données
 
-file = "KIRO-tiny"
+file = "KIRO-small"
 
 file_name = file + ".json"
 file_name_path = "instances/" + file_name
