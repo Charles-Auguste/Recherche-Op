@@ -1,20 +1,24 @@
 from pulp import *
 
-def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistances):
+def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistances, RL= False):
+    if RL:
+        var_cat = LpVariable
+    else:
+        var_cat = LpInteger
     nb_site = len(sites)
     nb_client = len(clients)
 
     # sites de construction
-    x_c = [LpVariable("x_construction_" + str(i), lowBound=0, upBound=1, cat=LpInteger) for i in range(nb_site)]
+    x_c = [LpVariable("x_construction_" + str(i), lowBound=0, upBound=1, cat=var_cat) for i in range(nb_site)]
     # sites de distribution
-    x_d = [LpVariable("x-distribution_" + str(i), lowBound=0, upBound=1, cat=LpInteger) for i in range(nb_site)]
+    x_d = [LpVariable("x-distribution_" + str(i), lowBound=0, upBound=1, cat=var_cat) for i in range(nb_site)]
     # automatisation
-    x_a = [LpVariable("x_auto_" + str(i), lowBound=0, upBound=1, cat=LpInteger) for i in range(nb_site)]
+    x_a = [LpVariable("x_auto_" + str(i), lowBound=0, upBound=1, cat=var_cat) for i in range(nb_site)]
     # parents
-    x_p = [[LpVariable("x_parent_distribution_" + str(i) + "_" + str(j), lowBound=0, upBound=1, cat=LpInteger) for i in
+    x_p = [[LpVariable("x_parent_distribution_" + str(i) + "_" + str(j), lowBound=0, upBound=1, cat=var_cat) for i in
             range(nb_site)] for j in range(nb_site)]
     # clients
-    x_cl = [[LpVariable("x_parent_client_" + str(i) + "_" + str(j), lowBound=0, upBound=1, cat=LpInteger) for i in
+    x_cl = [[LpVariable("x_parent_client_" + str(i) + "_" + str(j), lowBound=0, upBound=1, cat=var_cat) for i in
              range(nb_site)]
             for j in range(nb_client)]
 
@@ -44,7 +48,7 @@ def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistanc
     # produits
 
     z_client_distribution = [
-        [LpVariable("z_client_distribution_" + str(i) + "_" + str(j), lowBound=0, upBound=1, cat=LpInteger) for i in
+        [LpVariable("z_client_distribution_" + str(i) + "_" + str(j), lowBound=0, upBound=1, cat=var_cat) for i in
          range(nb_site)] for j in range(nb_client)]
     for id_client in range(nb_client):
         for id_site in range(nb_site):
@@ -53,7 +57,7 @@ def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistanc
             prob += z_client_distribution[id_client][id_site] >= x_cl[id_client][id_site] + x_d[id_site] - 1
 
     z_client_auto = [
-        [LpVariable("z_client_auto_" + str(i) + "_" + str(j), lowBound=0, upBound=1, cat=LpInteger) for i in
+        [LpVariable("z_client_auto_" + str(i) + "_" + str(j), lowBound=0, upBound=1, cat=var_cat) for i in
          range(nb_site)] for j in range(nb_client)]
     for id_client in range(nb_client):
         for id_site in range(nb_site):
@@ -62,7 +66,7 @@ def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistanc
             prob += z_client_auto[id_client][id_site] >= x_cl[id_client][id_site] + x_a[id_site] - 1
 
     z_client_parent = [
-        [[LpVariable("z_client_parent_" + str(i) + "_" + str(j) + "_" + str(k), lowBound=0, upBound=1, cat=LpInteger)
+        [[LpVariable("z_client_parent_" + str(i) + "_" + str(j) + "_" + str(k), lowBound=0, upBound=1, cat=var_cat)
           for i in
           range(nb_site)] for j in range(nb_site)] for k in range(nb_client)]
     for id_client in range(nb_client):
@@ -74,7 +78,7 @@ def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistanc
                     id_site_j] - 1
 
     z_production_client = [
-        [LpVariable("z_production_client_" + str(i) + "_" + str(j), lowBound=0, upBound=1, cat=LpInteger) for i in
+        [LpVariable("z_production_client_" + str(i) + "_" + str(j), lowBound=0, upBound=1, cat=var_cat) for i in
          range(nb_client)] for j in range(nb_site)]
     for id_site in range(nb_site):
         for id_client in range(nb_client):
@@ -83,7 +87,7 @@ def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistanc
             prob += z_production_client[id_site][id_client] >= x_p[id_site] + x_cl[id_client][id_site] - 1
 
     z_client_parent_auto = [[[LpVariable("z_client_parent_auto_" + str(i) + "_" + str(j) + "_" + str(k), lowBound=0,
-                                         upBound=1, cat=LpInteger) for i in range(nb_site)] for j in range(nb_site)] for
+                                         upBound=1, cat=var_cat) for i in range(nb_site)] for j in range(nb_site)] for
                             k in range(nb_client)]
     for id_client in range(nb_client):
         for id_site_j in range (nb_site):
@@ -93,7 +97,7 @@ def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistanc
                 prob += z_client_parent_auto[id_client][id_site_j][id_site_k] >= z_client_parent[id_client][id_site_j][
                     id_site_k] + x_a[id_site_k] - 1
 
-    non_negative_part = [LpVariable("non_negative_part_" + str(i), lowBound=0, cat=LpInteger) for i in range(nb_site)]
+    non_negative_part = [LpVariable("non_negative_part_" + str(i), lowBound=0, cat=var_cat) for i in range(nb_site)]
     for id_site in range(nb_site):
         somme = 0
         for id_client in range(nb_client):
@@ -139,7 +143,7 @@ def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistanc
 
     # SOLVEUR
 
-    prob.solve()
+    prob.solve(PULP_CBC_CMD())
 
     # Solutions
 
