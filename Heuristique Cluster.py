@@ -16,7 +16,7 @@ from itertools import cycle, islice
 
 # Données
 
-file = "KIRO-medium"
+file = "KIRO-large"
 
 file_name = file + ".json"
 file_name_path = "instances/" + file_name
@@ -33,10 +33,13 @@ print("nb_sites = ", nb_site)
 
 # Le nombre de cluster dépend de l'instance
 if file == "KIRO-large":
-    nb_cluster = 6  # idee max 10
+    nb_cluster = 6  # idee max 10 sites par cluster
+elif file == "KIRO-medium":
+    nb_cluster = 4
 else:
     nb_cluster = 3
 print("nb_clusters = ", nb_cluster)
+max_nb_site = 11
 
 
 # Super Client
@@ -84,7 +87,7 @@ def clustering(number_of_cluster: int, liste_client_coord: list, liste_site_coor
     predictions_site = predictions[nb_client:]
     count = np.unique(predictions_site, return_counts=True)[1]
     for label in np.unique(predictions_site):
-        if count[label] > 10:
+        if count[label] > max_nb_site:
             slice_index_client = []
             slice_index_site = []
             for i in range(len(predictions_client)):
@@ -98,7 +101,7 @@ def clustering(number_of_cluster: int, liste_client_coord: list, liste_site_coor
             sub_list_client = numpy_clients[slice_index_client]
             sub_list_site = numpy_sites[slice_index_site]
             sub_prediction = sub_clustering(4, get_liste_coord(sub_list_client), get_liste_coord(sub_list_site),
-                                            nb_cluster)
+                                            1 + len(np.unique(predictions)))
             for i in range(len(slice_index_client)):
                 predictions[slice_index_client[i]] = sub_prediction[i]
             for i in range(len(slice_index_site)):
@@ -208,6 +211,14 @@ def get_sub_problem(predictions: list):
     return list_sub_client, list_sub_site, list_sub_siteSiteDistance, list_sub_siteClientDistance, list_slice_index_client, list_slice_index_site
 
 
+def re_allocation(predictions):
+    numpy_siteClientDistances = np.asarray(siteClientDistances)
+    for i in range(nb_client):
+        j_min = np.argmin(numpy_siteClientDistances[:, i])
+        predictions[i] = predictions[nb_client + j_min]
+    return predictions
+
+
 def solution_heuristique(parameters, list_sub_client, list_sub_site, list_sub_siteSiteDistance,
                          list_sub_siteClientDistance,
                          list_index_clients, list_index_sites):
@@ -249,17 +260,17 @@ if __name__ == "__main__":
     list_client_coord = get_liste_coord(clients)
     list_site_coord = get_liste_coord(sites)
     prediction = clustering(nb_cluster, list_client_coord, list_site_coord)
-
+    prediction = re_allocation(prediction)
     list_sub_clients, list_sub_sites, list_sub_siteSiteDistances, list_sub_siteClientDistances, list_index_client, list_index_site = get_sub_problem(
         prediction)
     # show_client_site(name_dir)
-    # show_client_site_clustered(name_dir, prediction)
+    show_client_site_clustered(name_dir, prediction)
 
     print_sub_problem_stat(prediction, list_sub_clients, list_sub_sites)
     # show_super_client(set_super_client,name_dir)
     X = solution_heuristique(parameters, list_sub_clients, list_sub_sites, list_sub_siteSiteDistances,
                              list_sub_siteClientDistances, list_index_client, list_index_site)
-    jr.write_data(jr.encode_x(X),file_name_sol_path)
+    jr.write_data(jr.encode_x(X), file_name_sol_path)
 
     print("Coût de la solution optimale : ")
     print(int(co.total_cost(X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000))
