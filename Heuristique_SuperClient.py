@@ -130,7 +130,7 @@ def glouton_super_client(r: float, d: float, liste_client: list, parameters, inf
                 if (norm(super_client.coordinates, client_tire["coordinates"]) <= r and not sortie_boucle and
                         client_tire["demand"] <= d * maximum_demand and super_client.demand < parameters["capacities"][
                             "productionCenter"]):
-                    super_client.children.append(tirage)
+                    super_client.children.append(client_tire["id"])
                     super_client.demand += client_tire["demand"]
                     sortie_boucle = True
             if (not sortie_boucle):
@@ -142,6 +142,12 @@ def glouton_super_client(r: float, d: float, liste_client: list, parameters, inf
         print("#############################################")
     return set_super_client
 
+def link_distribution(set_super_client,sites, r):
+    for super_client in set_super_client:
+        for site in sites:
+            if (norm(site["coordinates"],super_client.coordinates) <= r):
+                super_client.parent = site["id"]
+    return 0
 
 # Affichage
 
@@ -228,55 +234,17 @@ def create_solution(parameters, client, sites, set_super):
             x_client[child - 1][client.parent - 1] = 1
     return [x_production, x_distribution, x_automatisation, x_parent, x_client]
 
-
-def check_constraint(X, nb_site, nb_client):
-    check = True
-    # Au plus un batiment par site
-    for id_site in range(nb_site):
-        if not (X[0][id_site] + X[1][id_site] <= 1):
-            print("Il y a plus d'un batiment sur un des sites " + str(id_site + 1))
-            check = False
-    # Automatisation seulement sur les centres de production
-    for id_site in range(nb_site):
-        if not (X[2][id_site] <= X[0][id_site]):
-            print("mauvaise automatisation " + str(id_site + 1))
-            check = False
-    # Parents des centres de distribution (~unicité)
-    for id_site in range(nb_site):
-        if not (np.sum(X[3][id_site]) == X[1][id_site]):
-            print("Parents non unique (centres de distribution) " + str(id_site + 1))
-            check = False
-    # Parents (validité du parent)
-    for id_site in range(nb_site):
-        for id_parent in range(nb_site):
-            if not (X[3][id_site][id_parent] <= X[0][id_parent]):
-                print("Parents incompatibles (centres de distribution) --> site : " + str(
-                    id_site + 1) + " --> parent : " + str(id_parent + 1))
-                check = False
-    # Clients (unicité)
-    for id_client in range(nb_client):
-        if not (np.sum(X[4][id_client]) == 1):
-            print("Parents non unique (clients) " + str(id_client + 1))
-            check = False
-    # Clients (validité du parent)
-    for id_client in range(nb_client):
-        for id_parent in range(nb_site):
-            if not (X[4][id_client][id_parent] <= X[0][id_parent] + X[1][id_parent]):
-                print("Parents incompatibles (clients) --> client : " + str(id_client + 1) + " --> parent : " + str(
-                    id_parent + 1))
-                check = False
-    return check
-
-
 # Ajuster la solution à tous les clients
 
 if __name__ == "__main__":
     os.makedirs(name_dir, exist_ok=True)
-    set_super_client = glouton_super_client(0.5, 0.5, clients, parameters, True)
+    set_super_client = glouton_super_client(2, 0.5, clients, parameters, True)
+    link_distribution(set_super_client, sites, 1)
     show_client_site(name_dir)
     show_super_client(set_super_client, sites, name_dir)
     # X = create_solution(parameters,clients,sites,set_super_client)
     # check_constraint(X,len(sites), len(clients))
-    # X = pl.solution_pl(parameters,clients,sites,siteSiteDistances,siteClientDistances)
-    # jr.write_data(jr.encode_x(X),file_name_sol_path)
-    # print(co.total_cost(X,parameters,clients,sites,siteSiteDistances,siteClientDistances)/10000)
+    X = pl.solution_pl(parameters,clients,sites,siteSiteDistances,siteClientDistances, set_super_client)
+    jr.write_data(jr.encode_x(X),file_name_sol_path)
+    print(co.total_cost(X,parameters,clients,sites,siteSiteDistances,siteClientDistances)/10000)
+    print(X)
