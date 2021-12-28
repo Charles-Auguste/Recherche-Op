@@ -61,7 +61,7 @@ import cout as co
 
 # Données
 
-file = "KIRO-large"
+file = "KIRO-medium"
 
 file_name = file + ".json"
 file_name_path = "instances/" + file_name
@@ -73,8 +73,8 @@ file_name_sol_path = name_dir + "/" + file_name_sol
 parameters, clients, sites, siteSiteDistances, siteClientDistances = jr.read_data(file_name_path)
 nb_client = len(clients)
 nb_site = len(sites)
-print("nb_clients = ", nb_client)
-print("nb_sites = ", nb_site)
+# print("nb_clients = ", nb_client)
+# print("nb_sites = ", nb_site)
 
 
 # Super Client
@@ -243,8 +243,8 @@ if __name__ == "__main__":
     show_client_site(name_dir)
     show_super_client(set_super_client, sites, name_dir)
     # X = create_solution(parameters,clients,sites,set_super_client)
-    # check_constraint(X,len(sites), len(clients))
     X = pl.solution_pl(parameters,clients,sites,siteSiteDistances,siteClientDistances, set_super_client)
+    pl.check_constraint(X,len(sites), len(clients))
     jr.write_data(jr.encode_x(X),file_name_sol_path)
     print(co.total_cost(X,parameters,clients,sites,siteSiteDistances,siteClientDistances)/10000)
     print(X)

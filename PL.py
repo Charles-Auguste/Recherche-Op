@@ -53,10 +53,19 @@ def pre_traitement_super_client(set_super_client : list, parameters, clients, si
     new_siteSiteDistances = siteSiteDistances
     new_siteClientDistances = [[] for i in range (len(sites))]
     for super_client in set_super_client:
+        # print(super_client.id)
         new_clients.append(
             {"id": super_client.id, "demand": super_client.demand, "coordinates": super_client.coordinates})
-        for i in range(len(sites)):
-            new_siteClientDistances[i].append(siteClientDistances[i][super_client.id - 1])
+        try:
+            for i in range(len(sites)):
+                new_siteClientDistances[i].append(siteClientDistances[i][super_client.id - 1])
+        except:
+            cluster_id_list = []
+            for i in range(len(set_super_client)):
+                cluster_id_list.append(set_super_client[i].id)
+            cluster_id_list.sort()
+            for i in range(len(sites)):
+                new_siteClientDistances[i].append(siteClientDistances[i][cluster_id_list.index(super_client.id)])
     return new_clients, new_sites, new_siteSiteDistances, new_siteClientDistances
 
 
@@ -70,11 +79,33 @@ def post_traitement_super_client(X, set_super_client, clients, sites, siteSiteDi
     parent = X[3]
     clie = [[] for j in range(nb_cl)]
     k = 0
-    for super_client in set_super_client:
-        clie[super_client.id - 1] = X[4][k]
-        for child in super_client.children:
-            clie[child - 1] = clie[super_client.id - 1]
-        k += 1
+    j = 0
+    try:
+        for super_client in set_super_client:
+            clie[super_client.id - 1] = X[4][k]
+            for child in super_client.children:
+                clie[child - 1] = clie[super_client.id - 1]
+            k += 1
+
+    except:
+        k = 0
+        cluster_id_list = []
+        for i in range(len(set_super_client)):
+            cluster_id_list.append(set_super_client[i].id)
+            for child in set_super_client[i].children:
+                cluster_id_list.append(child)
+
+        cluster_id_list.sort()
+
+        for super_client in set_super_client:
+            # print(cluster_id_list.index(super_client.id))
+            clie[cluster_id_list.index(super_client.id)] = X[4][k]
+
+
+            for child in super_client.children:
+                clie[cluster_id_list.index(child)] = clie[cluster_id_list.index(super_client.id)]
+                j += 1
+            k += 1
     return [production,distribution,auto,parent,clie]
 
 
