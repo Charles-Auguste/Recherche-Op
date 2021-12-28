@@ -74,63 +74,7 @@ def clustering_on_random_centers(number_of_cluster: int, liste_client_coord: lis
 
     return predictions
 
-#marche pas normalement
-def cluster_voisin(number_of_cluster: int, liste_client_coord: list, liste_site_coord: list, labels):
-    list_all_coord = liste_client_coord + liste_site_coord
-    numpy_siteSiteDistances = np.asarray(siteSiteDistances)
-    centers = []
-    for i in range(nb_cluster):
-        check = False
-        while(check == False):
-            id = [i for i in range(len(liste_site_coord))]
-            centers_id = np.random.choice(id, replace=False)
-            j_min = numpy_siteSiteDistances[:, centers_id].argmin(2)[1]
-            if(labels[nb_cluster + j_min] != labels[nb_cluster + id]):
-                centers.append(liste_site_coord[centers_id])
-                if(liste_site_coord[centers_id] not in centers):
-                    check = True
-    kmeans = cluster.MiniBatchKMeans(n_clusters=nb_cluster, init=np.asarray(centers))
-    kmeans.fit(list_all_coord)
-    predictions = kmeans.labels_.astype(int) + number_of_cluster
 
-    predictions_site = predictions[nb_client:]
-    count = np.unique(predictions_site, return_counts=True)[1]
-    for label in np.unique(predictions_site):
-        if count[label] > max_nb_site:
-            return cluster_voisin(number_of_cluster, liste_client_coord, liste_site_coord, labels)
-    return predictions
-
-def cluster_1_voisin(number_of_cluster: int, liste_client_coord: list, liste_site_coord: list, labels):
-    list_all_coord = liste_client_coord + liste_site_coord
-
-    numpy_siteSiteDistances = np.asarray(siteSiteDistances)
-    centers = []
-    check = False
-    while(check == False):
-        id = [i for i in range(len(liste_site_coord))]
-        centers_id = np.random.choice(np.asarray(id))
-        j_min = numpy_siteSiteDistances[:, centers_id].argmin(2)[1]
-        if(labels[nb_cluster + j_min] != labels[nb_cluster + id]):
-            centers.append(liste_site_coord[centers_id])
-            if(liste_site_coord[centers_id] not in centers):
-                check = True
-        lab1 = labels[nb_cluster + j_min]
-        lab2 = labels[nb_cluster + id]
-    kmeans = cluster.MiniBatchKMeans(n_clusters=nb_cluster, init=np.asarray(centers))
-    kmeans.fit(list_all_coord)
-    predictions = kmeans.labels_.astype(int) + number_of_cluster
-
-    label_problem_id = []
-    predictions_site = predictions[nb_client:]
-    count = np.unique(predictions_site, return_counts=True)[1]
-    for label in np.unique(predictions_site):
-        if count[label] > max_nb_site:
-            return cluster_voisin(number_of_cluster, liste_client_coord, liste_site_coord, labels)
-        label_problem_id.append(label)
-    label_problem_id.sort()
-    problem1 = label_problem_id.index(lab1)
-    problem2 = label_problem_id.index(lab2)
-    return predictions, problem1, problem2
 
 
 # Renvoie le cluster auquel appartient les clients puis les sites
@@ -373,18 +317,6 @@ if __name__ == "__main__":
     print(int(co.total_cost(X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000))
 
     for i in range(nb_test):
-        prediction, pb1, pb2 = cluster_1_voisin(nb_cluster, list_client_coord, list_site_coord, prediction)
-        prediction = re_allocation(prediction)
-        list_sub_clients, list_sub_sites, list_sub_siteSiteDistances, list_sub_siteClientDistances, list_index_client, list_index_site = get_sub_problem(
-        prediction)
-        # show_client_site(name_dir)
-        show_client_site_clustered(name_dir, prediction)
-
-        print_sub_problem_stat(prediction, list_sub_clients, list_sub_sites)
-        # show_super_client(set_super_client,name_dir)
-        X = solution_heuristique(parameters, list_sub_clients, list_sub_sites, list_sub_siteSiteDistances,
-                             list_sub_siteClientDistances, list_index_client, list_index_site, pb1, pb2)
-        jr.write_data(jr.encode_x(X), file_name_sol_path)
 
         print("Coût de la solution optimale : ")
         print(int(co.total_cost(X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000))
