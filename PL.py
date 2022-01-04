@@ -1,6 +1,8 @@
 from pulp import *
 
-def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistances):
+
+def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistances, fix_c=None, fix_d=None \
+                , fix_a=None, fix_p=None, fix_cl=None):
     nb_site = len(sites)
     nb_client = len(clients)
 
@@ -17,6 +19,36 @@ def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistanc
     x_cl = [[LpVariable("x_parent_client_" + str(i) + "_" + str(j), lowBound=0, upBound=1, cat=LpInteger) for i in
              range(nb_site)]
             for j in range(nb_client)]
+
+    if(fix_c != None):
+        for index, val_fix in fix_c:
+            x_c[index].setInitialValue(val_fix)
+            x_c[index].fixValue()
+
+    if (fix_c != None):
+        for index, val_fix in fix_c:
+            x_c[index].setInitialValue(val_fix)
+            x_c[index].fixValue()
+
+    if (fix_d != None):
+        for index, val_fix in fix_d:
+            x_d[index].setInitialValue(val_fix)
+            x_d[index].fixValue()
+
+    if (fix_a != None):
+        for index, val_fix in fix_a:
+            x_a[index].setInitialValue(val_fix)
+            x_a[index].fixValue()
+
+    if (fix_p != None):
+        for index, val_fix in fix_p:
+            x_p[index[0]][index[1]].setInitialValue(val_fix)
+            x_p[index[0]][index[1]].fixValue()
+
+    if (fix_cl != None):
+        for index, val_fix in fix_cl:
+            x_cl[index[0]][index[1]].setInitialValue(val_fix)
+            x_cl[index[0]][index[1]].fixValue()
 
     prob = LpProblem(name='facility_location', sense=LpMinimize)
 
@@ -86,9 +118,10 @@ def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistanc
                                          upBound=1, cat=LpInteger) for i in range(nb_site)] for j in range(nb_site)] for
                             k in range(nb_client)]
     for id_client in range(nb_client):
-        for id_site_j in range (nb_site):
-            for id_site_k in range (nb_site):
-                prob += z_client_parent_auto[id_client][id_site_j][id_site_k] <= z_client_parent[id_client][id_site_j][id_site_k]
+        for id_site_j in range(nb_site):
+            for id_site_k in range(nb_site):
+                prob += z_client_parent_auto[id_client][id_site_j][id_site_k] <= z_client_parent[id_client][id_site_j][
+                    id_site_k]
                 prob += z_client_parent_auto[id_client][id_site_j][id_site_k] <= x_a[id_site_k]
                 prob += z_client_parent_auto[id_client][id_site_j][id_site_k] >= z_client_parent[id_client][id_site_j][
                     id_site_k] + x_a[id_site_k] - 1
@@ -98,7 +131,8 @@ def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistanc
         somme = 0
         for id_client in range(nb_client):
             somme += clients[id_client]["demand"] * z_production_client[id_site][id_client]
-        somme -= (parameters["capacities"]["productionCenter"] + x_a[id_site] * parameters["capacities"]["automationBonus"])
+        somme -= (parameters["capacities"]["productionCenter"] + x_a[id_site] * parameters["capacities"][
+            "automationBonus"])
         prob += non_negative_part[id_site] >= somme
 
     # Objectif
@@ -112,8 +146,9 @@ def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistanc
     for i in range(nb_client):
         somme = 0
         for j in range(nb_site):
-            somme += parameters["productionCosts"]["distributionCenter"] * z_client_distribution[i][j] - parameters["productionCosts"]["automationBonus"] * z_client_auto[i][j]
-            for k in range (nb_site):
+            somme += parameters["productionCosts"]["distributionCenter"] * z_client_distribution[i][j] - \
+                     parameters["productionCosts"]["automationBonus"] * z_client_auto[i][j]
+            for k in range(nb_site):
                 somme -= parameters["productionCosts"]["automationBonus"] * z_client_parent_auto[i][j][k]
         somme += parameters["productionCosts"]["productionCenter"]
         somme *= clients[i]["demand"]
@@ -159,4 +194,4 @@ def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistanc
         for j in range(nb_site):
             x_client[i][j] = x_cl[i][j].value()
 
-    return [x_production, x_distribution,x_auto, x_parent, x_client]
+    return [x_production, x_distribution, x_auto, x_parent, x_client]
