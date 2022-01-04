@@ -293,12 +293,14 @@ def solution_reconstruction(subX, list_id_client, list_id_site):
     return [x_production, x_distribution, x_auto, x_parent, x_client]
 
 
-def fix_var(X, nb_non_fix):
+def fix_var(X, nb_site_non_fix, nb_client_non_fix):
     tirage_liste = [i for i in range(nb_site)]
-    index_liste = np.random.choice(tirage_liste, nb_site - nb_non_fix, replace=False)
+    index_liste = np.random.choice(tirage_liste, nb_site - nb_site_non_fix, replace=False)
     fix_c = dict()
     fix_d = dict()
     fix_a = dict()
+    fix_p = dict()
+
     for i in range(len(index_liste)):
         fix_c[index_liste[i]] = X[0][index_liste[i]]
         fix_d[index_liste[i]] = X[1][index_liste[i]]
@@ -333,7 +335,7 @@ if __name__ == "__main__":
         print("Coût de la solution optimale : ")
         print(int(co.total_cost(X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000))
 
-    fix_c, fix_d, fix_a = fix_var(X, nb_non_fix=4)
+    fix_c, fix_d, fix_a = fix_var(X, nb_non_fix=1)
     new_X = pl.solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistances, fix_c=fix_c, fix_d=fix_d,
                            fix_a=fix_a)
     print("Coût de la solution optimale : ")

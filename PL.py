@@ -113,8 +113,8 @@ def post_traitement_super_client(X, set_super_client, clients, sites, siteSiteDi
 
 
 
-def solution_pl(parameters, cli, sit, siteSit, siteCli, set_super_client=None, fix_c=None, fix_d=None \
-                , fix_a=None, fix_p=None, fix_cl=None):
+def solution_pl(parameters, cli, sit, siteSit, siteCli, set_super_client=None, fix_c=dict(), fix_d=dict() \
+                , fix_a=dict(), fix_p=dict(), fix_cl=dict()):
 
     old_clients = cli
     old_sites = sit
@@ -147,27 +147,27 @@ def solution_pl(parameters, cli, sit, siteSit, siteCli, set_super_client=None, f
              range(nb_site)]
             for j in range(nb_client)]
 
-    if(fix_c != None):
+    if(len(fix_c) != 0):
         for index, val_fix in fix_c.items():
             x_c[index].setInitialValue(val_fix)
             x_c[index].fixValue()
 
-    if (fix_d != None):
+    if (len(fix_d) != 0):
         for index, val_fix in fix_d.items():
             x_d[index].setInitialValue(val_fix)
             x_d[index].fixValue()
 
-    if (fix_a != None):
+    if (len(fix_a) != 0):
         for index, val_fix in fix_a.items():
             x_a[index].setInitialValue(val_fix)
             x_a[index].fixValue()
 
-    if (fix_p != None):
+    if (len(fix_p) != 0):
         for index, val_fix in fix_p.items():
             x_p[index[0]][index[1]].setInitialValue(val_fix)
             x_p[index[0]][index[1]].fixValue()
 
-    if (fix_cl != None):
+    if (len(fix_cl) != 0):
         for index, val_fix in fix_cl.items():
             x_cl[index[0]][index[1]].setInitialValue(val_fix)
             x_cl[index[0]][index[1]].fixValue()
@@ -176,10 +176,12 @@ def solution_pl(parameters, cli, sit, siteSit, siteCli, set_super_client=None, f
 
     # Au plus un batiment par site
     for id_site in range(nb_site):
-        prob += (x_c[id_site] + x_d[id_site] <= 1)
+        if id_site not in fix_c.keys():
+            prob += (x_c[id_site] + x_d[id_site] <= 1)
     # Automatisation seulement sur les centres de production
     for id_site in range(nb_site):
-        prob += (x_a[id_site] <= x_c[id_site])
+        if id_site not in fix_c.keys():
+            prob += (x_a[id_site] <= x_c[id_site])
     # Parents des centres de distribution (~unicité)
     for id_site in range(nb_site):
         prob += (lpSum(x_p[id_site]) == x_d[id_site])
