@@ -50,11 +50,11 @@ def write_data(data_dictionary, file_name):
 
 
 # pour réutiliser une solution precedente
-def decode(filename):
+def decode(filename, n_site):
     file = open(filename, 'r', encoding="utf-8")
     dict_list = json.load(file)
     x = []
-    n_site = max(dict_list["productionCenters"][-1]["id"], dict_list["distributionCenters"][-1]["id"]) - 1
+    # n_site = max(dict_list["productionCenters"][-1]["id"], dict_list["distributionCenters"][-1]["id"]) - 1
     n_client = dict_list["clients"][-1]["id"]
     x_site = [0 for i in range(n_site)]
     x_dist = [0 for i in range(n_site)]

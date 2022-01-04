@@ -148,32 +148,27 @@ def solution_pl(parameters, cli, sit, siteSit, siteCli, set_super_client=None, f
             for j in range(nb_client)]
 
     if(fix_c != None):
-        for index, val_fix in fix_c:
-            x_c[index].setInitialValue(val_fix)
-            x_c[index].fixValue()
-
-    if (fix_c != None):
-        for index, val_fix in fix_c:
+        for index, val_fix in fix_c.items():
             x_c[index].setInitialValue(val_fix)
             x_c[index].fixValue()
 
     if (fix_d != None):
-        for index, val_fix in fix_d:
+        for index, val_fix in fix_d.items():
             x_d[index].setInitialValue(val_fix)
             x_d[index].fixValue()
 
     if (fix_a != None):
-        for index, val_fix in fix_a:
+        for index, val_fix in fix_a.items():
             x_a[index].setInitialValue(val_fix)
             x_a[index].fixValue()
 
     if (fix_p != None):
-        for index, val_fix in fix_p:
+        for index, val_fix in fix_p.items():
             x_p[index[0]][index[1]].setInitialValue(val_fix)
             x_p[index[0]][index[1]].fixValue()
 
     if (fix_cl != None):
-        for index, val_fix in fix_cl:
+        for index, val_fix in fix_cl.items():
             x_cl[index[0]][index[1]].setInitialValue(val_fix)
             x_cl[index[0]][index[1]].fixValue()
 
