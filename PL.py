@@ -111,15 +111,23 @@ def post_traitement_super_client(X, set_super_client, clients, sites, siteSiteDi
 
 
 
-def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistances, set_super_client=None, fix_c=None, fix_d=None \
+
+
+def solution_pl(parameters, cli, sit, siteSit, siteCli, set_super_client=None, fix_c=None, fix_d=None \
                 , fix_a=None, fix_p=None, fix_cl=None):
+
+    old_clients = cli
+    old_sites = sit
+    old_siteSiteDistances = siteSit
+    old_siteClientDistances = siteCli
+
     if set_super_client != None:
         clients, sites, siteSiteDistances, siteClientDistances = pre_traitement_super_client(set_super_client,
                                                                                              parameters, old_clients,
                                                                                              old_sites,
                                                                                              old_siteSiteDistances,
                                                                                              old_siteClientDistances)
-    else:
+    else :
         clients, sites, siteSiteDistances, siteClientDistances = old_clients, old_sites, old_siteSiteDistances, old_siteClientDistances
 
     nb_site = len(sites)
