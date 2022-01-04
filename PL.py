@@ -1,8 +1,136 @@
 from pulp import *
+import numpy as np
+
+def check_constraint(X, nb_site, nb_client):
+    nb_error = 0
+    check = True
+    # Au plus un batiment par site
+    for id_site in range(nb_site):
+        if not (X[0][id_site] + X[1][id_site] <= 1):
+            print("Il y a plus d'un batiment sur un des sites " + str(id_site + 1))
+            nb_error += 1
+            check = False
+    # Automatisation seulement sur les centres de production
+    for id_site in range(nb_site):
+        if not (X[2][id_site] <= X[0][id_site]):
+            print("mauvaise automatisation " + str(id_site + 1))
+            nb_error += 1
+            check = False
+    # Parents des centres de distribution (~unicité)
+    for id_site in range(nb_site):
+        if not (np.sum(X[3][id_site]) == X[1][id_site]):
+            print("Parents non unique (centres de distribution) " + str(id_site + 1))
+            nb_error += 1
+            check = False
+    # Parents (validité du parent)
+    for id_site in range(nb_site):
+        for id_parent in range(nb_site):
+            if not (X[3][id_site][id_parent] <= X[0][id_parent]):
+                print("Parents incompatibles (centres de distribution) --> site : " + str(
+                    id_site + 1) + " --> parent : " + str(id_parent + 1))
+                nb_error += 1
+                check = False
+    # Clients (unicité)
+    for id_client in range(nb_client):
+        if not (np.sum(X[4][id_client]) == 1):
+            print("Parents non unique (clients) " + str(id_client + 1))
+            nb_error += 1
+            check = False
+    # Clients (validité du parent)
+    for id_client in range(nb_client):
+        for id_parent in range(nb_site):
+            if not (X[4][id_client][id_parent] <= X[0][id_parent] + X[1][id_parent]):
+                print("Parents incompatibles (clients) --> client : " + str(id_client + 1) + " --> parent : " + str(
+                    id_parent + 1))
+                nb_error += 1
+                check = False
+    print("nombre d'erreurs ... " + str(nb_error))
+    return check
+
+def pre_traitement_super_client(set_super_client : list, parameters, clients, sites, siteSiteDistances, siteClientDistances):
+    new_clients = []
+    new_sites = sites
+    new_siteSiteDistances = siteSiteDistances
+    new_siteClientDistances = [[] for i in range (len(sites))]
+    for super_client in set_super_client:
+        # print(super_client.id)
+        new_clients.append(
+            {"id": super_client.id, "demand": super_client.demand, "coordinates": super_client.coordinates})
+        try:
+            for i in range(len(sites)):
+                new_siteClientDistances[i].append(siteClientDistances[i][super_client.id - 1])
+        except:
+            cluster_id_list = []
+            for i in range(len(set_super_client)):
+                cluster_id_list.append(set_super_client[i].id)
+            cluster_id_list.sort()
+            for i in range(len(sites)):
+                new_siteClientDistances[i].append(siteClientDistances[i][cluster_id_list.index(super_client.id)])
+    return new_clients, new_sites, new_siteSiteDistances, new_siteClientDistances
+
+
+def post_traitement_super_client(X, set_super_client, clients, sites, siteSiteDistances, siteClientDistances):
+    check_constraint(X,len(X[0]),len(X[4]))
+    nb_cl = len(clients)
+    nb_sit = len(sites)
+    production = X[0]
+    distribution = X[1]
+    auto = X[2]
+    parent = X[3]
+    clie = [[] for j in range(nb_cl)]
+    k = 0
+    j = 0
+    try:
+        for super_client in set_super_client:
+            clie[super_client.id - 1] = X[4][k]
+            for child in super_client.children:
+                clie[child - 1] = clie[super_client.id - 1]
+            k += 1
+
+    except:
+        k = 0
+        cluster_id_list = []
+        for i in range(len(set_super_client)):
+            cluster_id_list.append(set_super_client[i].id)
+            for child in set_super_client[i].children:
+                cluster_id_list.append(child)
+
+        cluster_id_list.sort()
+
+        for super_client in set_super_client:
+            # print(cluster_id_list.index(super_client.id))
+            clie[cluster_id_list.index(super_client.id)] = X[4][k]
+
+
+            for child in super_client.children:
+                clie[cluster_id_list.index(child)] = clie[cluster_id_list.index(super_client.id)]
+                j += 1
+            k += 1
+    return [production,distribution,auto,parent,clie]
+
+
+
+
+
+def solution_pl(parameters, cli, sit, siteSit, siteCli, set_super_client=None):
+
+    old_clients = cli
+    old_sites = sit
+    old_siteSiteDistances = siteSit
+    old_siteClientDistances = siteCli
 
 
 def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistances, fix_c=None, fix_d=None \
                 , fix_a=None, fix_p=None, fix_cl=None):
+    if set_super_client != None:
+        clients, sites, siteSiteDistances, siteClientDistances = pre_traitement_super_client(set_super_client,
+                                                                                             parameters, old_clients,
+                                                                                             old_sites,
+                                                                                             old_siteSiteDistances,
+                                                                                             old_siteClientDistances)
+    else :
+        clients, sites, siteSiteDistances, siteClientDistances = old_clients, old_sites, old_siteSiteDistances, old_siteClientDistances
+
     nb_site = len(sites)
     nb_client = len(clients)
 
@@ -174,7 +302,7 @@ def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistanc
 
     # SOLVEUR
 
-    prob.solve()
+    prob.solve(PULP_CBC_CMD(msg=True, warmStart=True, options= ['maxsol 1']))
 
     # Solutions
 
@@ -194,4 +322,9 @@ def solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistanc
         for j in range(nb_site):
             x_client[i][j] = x_cl[i][j].value()
 
-    return [x_production, x_distribution, x_auto, x_parent, x_client]
+    X_solution = [x_production, x_distribution,x_auto, x_parent, x_client]
+
+    if set_super_client != None:
+        X_solution = post_traitement_super_client(X_solution, set_super_client, old_clients, old_sites, old_siteSiteDistances,
+                                         old_siteClientDistances)
+    return X_solution

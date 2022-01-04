@@ -61,44 +61,50 @@ import cout as co
 
 # Données
 
-file = "KIRO-small"
+file = "KIRO-medium"
 
 file_name = file + ".json"
 file_name_path = "instances/" + file_name
 file_name_sol = "sol-" + file_name
-name_dir = "solution/"+ file + "___" + str(datetime.now().date())+"___"+str(datetime.now().hour)+"_"+str(datetime.now().minute)+"_"+str(datetime.now().second)
-file_name_sol_path = name_dir +"/" + file_name_sol
+name_dir = "solution/" + file + "___Super_client___" + str(datetime.now().date()) + "___" + str(
+    datetime.now().hour) + "_" + str(datetime.now().minute) + "_" + str(datetime.now().second)
+file_name_sol_path = name_dir + "/" + file_name_sol
 
 parameters, clients, sites, siteSiteDistances, siteClientDistances = jr.read_data(file_name_path)
 nb_client = len(clients)
 nb_site = len(sites)
-print("nb_clients = ", nb_client)
-print("nb_sites = ", nb_site)
+# print("nb_clients = ", nb_client)
+# print("nb_sites = ", nb_site)
+
 
 # Super Client
 
 class Super_client:
-    id : int
-    coordinates : list
-    demand : int
-    children : list
+    id: int
+    coordinates: list
+    demand: int
+    children: list
+    parent: int
 
-    def __init__(self,_id,_coord,_demand):
+    def __init__(self, _id, _coord, _demand):
         self.id = _id
         self.coordinates = _coord
         self.demand = _demand
+        self.parent = 0
         self.children = []
+
 
 # Glouton
 
-def norme(coord1,coord2):
-    valeur = (coord1[0]-coord2[0])*(coord1[0]-coord2[0]) + (coord1[1]-coord2[1])*(coord1[1]-coord2[1])
-    valeur = np.sqrt(valeur)
-    return valeur
+def norm(coord1, coord2):
+    value = (coord1[0] - coord2[0]) * (coord1[0] - coord2[0]) + (coord1[1] - coord2[1]) * (coord1[1] - coord2[1])
+    value = np.sqrt(value)
+    return value
 
-def glouton_super_client(r : float,d : float, liste_client : list, info = False):
+
+def glouton_super_client(r: float, d: float, liste_client: list, parameters, info=False):
     if info:
-        print ("#############################################")
+        print("#############################################")
         print("#  Glouton Super clients")
         print("#  Rayon r : " + str(r))
     set_super_client = []
@@ -112,18 +118,19 @@ def glouton_super_client(r : float,d : float, liste_client : list, info = False)
         print("#  Marge d'erreur : " + str(d))
         print("# \n#  Calcul en cours ...\n#")
     while len(set_client) != 0:
-        tirage = random.randint(0,len(set_client) - 1)
+        tirage = random.randint(0, len(set_client) - 1)
         client_tire = set_client[tirage]
         sortie_boucle = False
         del set_client[tirage]
         if len(set_super_client) == 0:
             set_super_client.append(
                 Super_client(client_tire["id"], client_tire["coordinates"], client_tire["demand"]))
-        else :
+        else:
             for super_client in set_super_client:
-                if (norme(super_client.coordinates, client_tire["coordinates"]) <= r and not sortie_boucle and
-                        client_tire["demand"] <= d * maximum_demand):
-                    super_client.children.append(tirage)
+                if (norm(super_client.coordinates, client_tire["coordinates"]) <= r and not sortie_boucle and
+                        client_tire["demand"] <= d * maximum_demand and super_client.demand < parameters["capacities"][
+                            "productionCenter"]):
+                    super_client.children.append(client_tire["id"])
                     super_client.demand += client_tire["demand"]
                     sortie_boucle = True
             if (not sortie_boucle):
@@ -135,42 +142,54 @@ def glouton_super_client(r : float,d : float, liste_client : list, info = False)
         print("#############################################")
     return set_super_client
 
+def link_distribution(set_super_client,sites, r):
+    for super_client in set_super_client:
+        for site in sites:
+            if (norm(site["coordinates"],super_client.coordinates) <= r):
+                super_client.parent = site["id"]
+    return 0
+
 # Affichage
 
-def show_client_site (name):
-    x1, x2 = [],[]
-    y1, y2 = [],[]
+def show_client_site(name):
+    x1, x2 = [], []
+    y1, y2 = [], []
     size = []
     for id_client in range(nb_client):
         x1.append(clients[id_client]["coordinates"][0])
         y1.append(clients[id_client]["coordinates"][1])
-        size.append(clients[id_client]["demand"]/1000)
+        size.append(clients[id_client]["demand"] / 1000)
     for id_site in range(nb_site):
         x2.append(sites[id_site]["coordinates"][0])
         y2.append(sites[id_site]["coordinates"][1])
 
     plt.scatter(x1, y1, s=size)
-    plt.scatter(x2,y2)
+    plt.scatter(x2, y2)
 
     plt.title('Répartition des clients et des sites')
     plt.xlabel('x')
     plt.ylabel('y')
 
-    plt.savefig(name+'/Repartition_normale.png')
+    plt.savefig(name + '/Repartition_normale.png')
     plt.show()
 
-def show_super_client(set_super,name):
+
+def show_super_client(set_super, sites, name):
     x1, x2 = [], []
     y1, y2 = [], []
     size = []
     for el in set_super:
         x1.append(el.coordinates[0])
         y1.append(el.coordinates[1])
-        size.append(el.demand/1000)
+        size.append(el.demand / 1000)
     for id_site in range(nb_site):
         x2.append(sites[id_site]["coordinates"][0])
         y2.append(sites[id_site]["coordinates"][1])
 
+    for el in set_super:
+        if el.parent != 0:
+            plt.plot([el.coordinates[0], sites[el.parent - 1]["coordinates"][0]],
+                     [el.coordinates[1], sites[el.parent - 1]["coordinates"][1]], color='black')
     plt.scatter(x1, y1, s=size, c="red")
     plt.scatter(x2, y2, c="orange")
 
@@ -178,28 +197,54 @@ def show_super_client(set_super,name):
     plt.xlabel('x')
     plt.ylabel('y')
 
-    plt.savefig(name +'/Repartition_super.png')
+    plt.savefig(name + '/Repartition_super.png')
     plt.show()
+
 
 # Création nouveau client
 
-def new_json(set_super):
-    pass
+def new_json(set_super: list, para, clie, sit, siteSite, siteClie, file):
+    rep = {"parameters": para, "clients": [], "sites": sit, "siteSiteDistances": siteSite, "siteClientDistances": []}
+    for client in set_super:
+        rep["clients"].append({"id": client.id, "demand": client.demand, "coordinates": client.coordinates})
+    for i in range(len(sit)):
+        site_coord = []
+        for client in set_super:
+            site_coord.append(siteClie[i][client.id - 1])
+        rep["siteClientDistances"].append(site_coord)
+    jr.write_data(file_name=file, data_dictionary=rep)
+
+
+def create_solution(parameters, client, sites, set_super):
+    nb_site = len(sites)
+    nb_client = len(client)
+    x_production = [0 for i in range(nb_site)]
+    x_distribution = [0 for i in range(nb_site)]
+    x_automatisation = [0 for i in range(nb_site)]
+    x_parent = [[0 for i in range(nb_site)] for j in range(nb_site)]
+    x_client = [[0 for i in range(nb_site)] for j in range(nb_client)]
+    for client in set_super:
+        x_distribution[client.parent - 1] = 1
+        x_client[client.id - 1][client.parent - 1] = 1
+    for i in range(nb_site):
+        if x_distribution[i] == 0:
+            x_production[i] = 1
+    for client in set_super:
+        for child in client.children:
+            x_client[child - 1][client.parent - 1] = 1
+    return [x_production, x_distribution, x_automatisation, x_parent, x_client]
 
 # Ajuster la solution à tous les clients
 
-
 if __name__ == "__main__":
     os.makedirs(name_dir, exist_ok=True)
-    set_super_client = glouton_super_client(0,0,clients,False)
+    set_super_client = glouton_super_client(2, 0.5, clients, parameters, True)
+    link_distribution(set_super_client, sites, 1)
     show_client_site(name_dir)
-    show_super_client(set_super_client,name_dir)
-    X = pl.solution_pl(parameters,clients,sites,siteSiteDistances,siteClientDistances)
+    show_super_client(set_super_client, sites, name_dir)
+    # X = create_solution(parameters,clients,sites,set_super_client)
+    X = pl.solution_pl(parameters,clients,sites,siteSiteDistances,siteClientDistances, set_super_client)
+    pl.check_constraint(X,len(sites), len(clients))
     jr.write_data(jr.encode_x(X),file_name_sol_path)
-
-    print("Coût de la solution optimale : ")
-    print(int(co.total_cost(X,parameters,clients,sites,siteSiteDistances,siteClientDistances)/10000))
-
-
-
-
+    print(co.total_cost(X,parameters,clients,sites,siteSiteDistances,siteClientDistances)/10000)
+    print(X)

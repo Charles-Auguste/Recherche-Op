@@ -5,6 +5,7 @@ import json_reader as jr
 import matplotlib.pyplot as plt
 import PL as pl
 import os as os
+import Heuristique_SuperClient as hsc
 from datetime import datetime
 import cout as co
 
@@ -39,37 +40,41 @@ elif file == "KIRO-medium":
 else:
     nb_cluster = 3
 print("nb_clusters = ", nb_cluster)
-max_nb_site = 11
+max_nb_site = 20
+max_site_need_super_client = 13
 
-
-# Super Client
-
-class Super_client:
-    id: int
-    coordinates: list
-    demand: int
-    children: list
-
-    def __init__(self, _id, _coord, _demand):
-        self.id = _id
-        self.coordinates = _coord
-        self.demand = _demand
-        self.children = []
-
-
-# Glouton
-
-def norme(coord1, coord2):
-    valeur = (coord1[0] - coord2[0]) * (coord1[0] - coord2[0]) + (coord1[1] - coord2[1]) * (coord1[1] - coord2[1])
-    valeur = np.sqrt(valeur)
-    return valeur
-
+add_super_client = []
+use_super_client = False
 
 def get_liste_coord(liste_client: list):
     liste_client_coord = []
     for client in liste_client:
         liste_client_coord.append(client["coordinates"])
     return liste_client_coord
+
+
+# Renvoie le cluster auquel appartient les clients puis les sites
+# prediction[:nb_client] puis prediction[nb_client:]
+def clustering_on_random_centers(number_of_cluster: int, liste_client_coord: list, liste_site_coord: list):
+    list_all_coord = liste_client_coord + liste_site_coord
+    id = [i for i in range(len(liste_site_coord))]
+    centers_id = np.random.choice(id, nb_cluster, replace=False)
+    centers = []
+    for i in range(len(centers_id)):
+        centers.append(liste_site_coord[centers_id[i]])
+    kmeans = cluster.MiniBatchKMeans(n_clusters=nb_cluster, init=np.asarray(centers))
+    kmeans.fit(list_all_coord)
+    predictions = kmeans.labels_.astype(int) + number_of_cluster
+
+    predictions_site = predictions[nb_client:]
+    count = np.unique(predictions_site, return_counts=True)[1]
+    for i in range(len(np.unique(predictions_site))):
+        if count[i] > max_nb_site:
+            return clustering_on_random_centers(number_of_cluster, liste_client_coord, liste_site_coord)
+
+    return predictions
+
+
 
 
 # Renvoie le cluster auquel appartient les clients puis les sites
@@ -106,6 +111,16 @@ def clustering(number_of_cluster: int, liste_client_coord: list, liste_site_coor
                 predictions[slice_index_client[i]] = sub_prediction[i]
             for i in range(len(slice_index_site)):
                 predictions[nb_client + slice_index_site[i]] = sub_prediction[i + len(slice_index_client)]
+
+    predictions_site = predictions[nb_client:]
+    count = np.unique(predictions_site, return_counts=True)[1]
+    max_rayon = 2
+    for i in range(len(np.unique(predictions_site))):
+        if count[i] > max_site_need_super_client:
+            add_super_client.append((count[i]-max_site_need_super_client)/(max_nb_site-max_site_need_super_client))
+        else:
+            add_super_client.append(0)
+
     return predictions
 
 
@@ -219,16 +234,38 @@ def re_allocation(predictions):
     return predictions
 
 
+
 def solution_heuristique(parameters, list_sub_client, list_sub_site, list_sub_siteSiteDistance,
                          list_sub_siteClientDistance,
-                         list_index_clients, list_index_sites):
-    subX = []
-    for subproblem in range(len(list_sub_clients)):
-        subX.append(pl.solution_pl(parameters, list_sub_client[subproblem], list_sub_site[subproblem],
-                                   list_sub_siteSiteDistance[subproblem],
-                                   list_sub_siteClientDistance[subproblem]))
-    return solution_reconstruction(subX, list_index_clients, list_index_sites)
-
+                         list_index_clients, list_index_sites, problem1=None, problem2=None):
+    if(problem1 == None):
+        subX = []
+        # add_super_client = [0 for i in  range(len(list_sub_client))]
+        print(add_super_client)
+        set_super_client = None
+        for subproblem in range(len(list_sub_clients)):
+            if(use_super_client):
+                set_super_client = hsc.glouton_super_client(add_super_client[subproblem], 0.3, list_sub_client[subproblem].tolist(), parameters, True)
+                hsc.link_distribution(set_super_client, list_sub_site[subproblem].tolist(), 1)
+            subX.append(pl.solution_pl(parameters, list_sub_client[subproblem], list_sub_site[subproblem],
+                                       list_sub_siteSiteDistance[subproblem],
+                                       list_sub_siteClientDistance[subproblem],set_super_client))
+        return solution_reconstruction(subX, list_index_clients, list_index_sites)
+    else:
+        subX = []
+        # add_super_client = [0 for i in  range(len(list_sub_client))]
+        print(add_super_client)
+        set_super_client = None
+        problems = [problem1, problem2]
+        for subproblem in problems:
+            if (use_super_client):
+                set_super_client = hsc.glouton_super_client(add_super_client[subproblem], 0.3,
+                                                            list_sub_client[subproblem].tolist(), parameters, True)
+                hsc.link_distribution(set_super_client, list_sub_site[subproblem].tolist(), 1)
+            subX.append(pl.solution_pl(parameters, list_sub_client[subproblem], list_sub_site[subproblem],
+                                       list_sub_siteSiteDistance[subproblem],
+                                       list_sub_siteClientDistance[subproblem], set_super_client))
+        return solution_reconstruction(subX, list_index_clients, list_index_sites)
 
 def solution_reconstruction(subX, list_id_client, list_id_site):
     x_production = [0 for i in range(nb_site)]
@@ -254,11 +291,15 @@ def solution_reconstruction(subX, list_id_client, list_id_site):
                     subX[subproblem][4][client][site]
     return [x_production, x_distribution, x_auto, x_parent, x_client]
 
+nb_test = 10
 
 if __name__ == "__main__":
     os.makedirs(name_dir, exist_ok=True)
     list_client_coord = get_liste_coord(clients)
     list_site_coord = get_liste_coord(sites)
+    val = 100000000000
+    X = []
+
     prediction = clustering(nb_cluster, list_client_coord, list_site_coord)
     prediction = re_allocation(prediction)
     list_sub_clients, list_sub_sites, list_sub_siteSiteDistances, list_sub_siteClientDistances, list_index_client, list_index_site = get_sub_problem(
@@ -274,3 +315,12 @@ if __name__ == "__main__":
 
     print("Coût de la solution optimale : ")
     print(int(co.total_cost(X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000))
+
+    for i in range(nb_test):
+
+        print("Coût de la solution optimale : ")
+        print(int(co.total_cost(X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000))
+        if int(co.total_cost(X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000) < val:
+            val = int(co.total_cost(X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000)
+
+    jr.write_data(jr.encode_x(X), "best_sol_from_batch" + file_name_sol_path)
