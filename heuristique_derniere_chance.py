@@ -160,16 +160,23 @@ def build_solution_simple(site_var_f,nb_sit, nb_clien, list_clien, list_sit):
     X_client = [[0 for i in range(nb_sit)] for i in range(nb_clien)]
     a=1
     for site in site_var_f:
-        for id_child in site.children:
-            site.demand += list_clien[id_child - 1]["demand"]
         print("demand site ", a, " : ", site.demand)
         a+=1
     for site in site_var_f:
         for id_child in site.children:
             X_client[id_child - 1][site.id - 1] = 1
-    X_prod[13] = 0
-    X_distr[13] = 1
-    X_auto[13] = 0
+
+    site_demand_trie = sorted(site_var_f, key=lambda site: site.demand)
+    for i in range(15):
+        X_prod[site_demand_trie[i].id - 1] = 1
+        X_distr[site_demand_trie[i].id - 1] = 0
+        X_auto[site_demand_trie[i].id - 1] = 0
+    numpy_siteSiteDistance = np.asarray(siteSiteDistances)
+    numpyS = numpy_siteSiteDistance[:, 13]
+    k = 2
+    idx = np.argpartition(numpyS, k)
+    idx_2eme_site_plus_proche = idx[:k][1]
+    X_parent[13][idx_2eme_site_plus_proche] = 0
     return ([X_prod,X_distr,X_auto,X_parent,X_client])
 
 
