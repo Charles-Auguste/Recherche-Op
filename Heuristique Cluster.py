@@ -17,7 +17,7 @@ from itertools import cycle, islice
 
 # Données
 
-file = "KIRO-medium"
+file = "KIRO-large"
 
 file_name = file + ".json"
 file_name_path = "instances/" + file_name
@@ -104,7 +104,7 @@ def clustering(number_of_cluster: int, liste_client_coord: list, liste_site_coor
             numpy_sites = np.asarray(sites)
             sub_list_client = numpy_clients[slice_index_client]
             sub_list_site = numpy_sites[slice_index_site]
-            sub_prediction = sub_clustering(4, get_liste_coord(sub_list_client), get_liste_coord(sub_list_site),
+            sub_prediction = sub_clustering(3, get_liste_coord(sub_list_client), get_liste_coord(sub_list_site),
                                             1 + len(np.unique(predictions)))
             for i in range(len(slice_index_client)):
                 predictions[slice_index_client[i]] = sub_prediction[i]
@@ -234,22 +234,68 @@ def re_allocation(predictions):
     return predictions
 
 
-def solution_heuristique(parameters, list_sub_client, list_sub_site, list_sub_siteSiteDistance,
+def re_allocation_a_la_main(predictions):
+    cluster_gauche = predictions[nb_client + 40 - 1]
+    rattache_gauche = predictions[nb_client + 50 - 1]
+
+    mix_haut = predictions[nb_client + 35 - 1]
+    mix_bas = predictions[nb_client + 31 - 1]
+    for i in range(nb_site):
+        if(predictions[nb_client+i] == mix_haut or prediction[nb_client+i] == rattache_gauche):
+            predictions[nb_client + i] = mix_bas
+        #if (predictions[nb_client + i] == rattache_gauche):
+        #    predictions[nb_client + i] = cluster_gauche
+    #predictions[nb_client + 47 - 1] = mix_bas
+    #predictions[nb_client + 25 - 1] = mix_bas
+    #predictions[nb_client + 38 - 1] = predictions[nb_client + 42 - 1]
+    re_allocation(predictions)
+    print(mix_bas)
+    uniq = np.unique(predictions[nb_client:])
+    pred_copy = uniq.copy()
+    print(pred_copy.tolist())
+    new_subproblem = pred_copy.tolist().index(mix_bas)
+    print(new_subproblem)
+    return predictions, new_subproblem
+
+def solution_heuristique2(X, new_sub_prob, parameters, list_sub_client, list_sub_site, list_sub_siteSiteDistance,
                          list_sub_siteClientDistance,
                          list_index_clients, list_index_sites, problem1=None, problem2=None):
     if (problem1 == None):
-        subX = []
+        subX = [i for i in range(len(list_sub_client))]
         # add_super_client = [0 for i in  range(len(list_sub_client))]
         print(add_super_client)
         set_super_client = None
         for subproblem in range(len(list_sub_clients)):
+            print("============")
+            print("subproblem numero: ", subproblem)
+            print("nb_site: ", len(list_sub_site[subproblem]))
+            if (subproblem == new_sub_prob):
+                subX[subproblem] = pl.solution_pl(parameters, list_sub_client[subproblem], list_sub_site[subproblem],
+                                       list_sub_siteSiteDistance[subproblem],
+                                       list_sub_siteClientDistance[subproblem], set_super_client)
+            print("============")
+        return solution_reconstruction2(subX, list_index_clients, list_index_sites, new_sub_prob,X)
+
+
+def solution_heuristique(parameters, list_sub_client, list_sub_site, list_sub_siteSiteDistance,
+                         list_sub_siteClientDistance,
+                         list_index_clients, list_index_sites, problem1=None, problem2=None):
+    if (problem1 == None):
+        subX = [i for i in range(len(list_sub_clients))]
+        # add_super_client = [0 for i in  range(len(list_sub_client))]
+        print(add_super_client)
+        set_super_client = None
+        for subproblem in range(len(list_sub_clients)):
+            print("============")
+            print("subproblem numero: ", subproblem)
+            print("============")
             if (use_super_client):
                 set_super_client = hsc.glouton_super_client(add_super_client[subproblem], 0.3,
                                                             list_sub_client[subproblem].tolist(), parameters, True)
                 hsc.link_distribution(set_super_client, list_sub_site[subproblem].tolist(), 1)
-            subX.append(pl.solution_pl(parameters, list_sub_client[subproblem], list_sub_site[subproblem],
+            subX[subproblem] = pl.solution_pl(parameters, list_sub_client[subproblem], list_sub_site[subproblem],
                                        list_sub_siteSiteDistance[subproblem],
-                                       list_sub_siteClientDistance[subproblem], set_super_client))
+                                       list_sub_siteClientDistance[subproblem], set_super_client)
         return solution_reconstruction(subX, list_index_clients, list_index_sites)
     else:
         subX = []
@@ -266,7 +312,6 @@ def solution_heuristique(parameters, list_sub_client, list_sub_site, list_sub_si
                                        list_sub_siteSiteDistance[subproblem],
                                        list_sub_siteClientDistance[subproblem], set_super_client))
         return solution_reconstruction(subX, list_index_clients, list_index_sites)
-
 
 def solution_reconstruction(subX, list_id_client, list_id_site):
     x_production = [0 for i in range(nb_site)]
@@ -290,6 +335,34 @@ def solution_reconstruction(subX, list_id_client, list_id_site):
             for client in range(len(subX[subproblem][4])):
                 x_client[list_id_client[subproblem][client]][list_id_site[subproblem][site]] = \
                     subX[subproblem][4][client][site]
+    return [x_production, x_distribution, x_auto, x_parent, x_client]
+
+
+
+
+def solution_reconstruction2(subX, list_id_client, list_id_site, new_subprob, X):
+    x_production = X[0]
+    x_distribution = X[1]
+    x_auto = X[2]
+    x_parent = X[3]
+    x_client = X[4]
+    for subproblem in range(len(subX)):
+        if subproblem == new_subprob:
+            for site in range(len(subX[subproblem][0])):
+                x_production[list_id_site[subproblem][site]] = subX[subproblem][0][site]
+                x_distribution[list_id_site[subproblem][site]] = subX[subproblem][1][site]
+                x_auto[list_id_site[subproblem][site]] = subX[subproblem][2][site]
+            for site1 in range(len(subX[subproblem][0])):
+                for site2 in range(len(subX[subproblem][0])):
+                    x_parent[list_id_site[subproblem][site1]][list_id_site[subproblem][site2]] = \
+                        subX[subproblem][3][site1][site2]
+            for site in range(len(subX[subproblem][0])):
+                # je suis pas sur du 0
+                # print("site", len(subX[subproblem][0]))
+                # print("client", len(subX[subproblem][4]))
+                for client in range(len(subX[subproblem][4])):
+                    x_client[list_id_client[subproblem][client]][list_id_site[subproblem][site]] = \
+                        subX[subproblem][4][client][site]
     return [x_production, x_distribution, x_auto, x_parent, x_client]
 
 
@@ -334,7 +407,7 @@ def fix_var(X, nb_site_non_fix, nb_client_non_fix, predictions_site):
 
 if __name__ == "__main__":
     os.makedirs(name_dir, exist_ok=True)
-    best_solution_known_file = "best_solution/" + "37_2_3746.json"
+    best_solution_known_file = "best_solution/" + "depart3abc.json"
     try:
         X = jr.decode(best_solution_known_file, nb_site)
         print("solution trouvee")
@@ -345,6 +418,7 @@ if __name__ == "__main__":
 
         prediction = clustering(nb_cluster, list_client_coord, list_site_coord)
         prediction = re_allocation(prediction)
+        prediction,subprob = re_allocation_a_la_main(prediction)
         list_sub_clients, list_sub_sites, list_sub_siteSiteDistances, list_sub_siteClientDistances, list_index_client, list_index_site = get_sub_problem(
             prediction)
         # show_client_site(name_dir)
@@ -358,7 +432,7 @@ if __name__ == "__main__":
 
         print("Coût de la solution optimale : ")
         print(int(co.total_cost(X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000))
-
+'''
     print("Coût de la solution optimale : ")
     print(int(co.total_cost(X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000))
     cout_before = int(co.total_cost(X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000)
@@ -368,7 +442,25 @@ if __name__ == "__main__":
 
     prediction = clustering(nb_cluster, list_client_coord, list_site_coord)
     prediction = re_allocation(prediction)
+    prediction, new_subprob = re_allocation_a_la_main(prediction)
 
+    # show_client_site_clustered(name_dir, prediction)
+
+    list_sub_clients, list_sub_sites, list_sub_siteSiteDistances, list_sub_siteClientDistances, list_index_client, list_index_site = get_sub_problem(
+        prediction)
+    # show_client_site(name_dir)
+    # show_client_site_clustered(name_dir, prediction)
+    
+    print_sub_problem_stat(prediction, list_sub_clients, list_sub_sites)
+    # show_super_client(set_super_client,name_dir)
+    X = solution_heuristique2(X, new_subprob, parameters, list_sub_clients, list_sub_sites, list_sub_siteSiteDistances,
+                             list_sub_siteClientDistances, list_index_client, list_index_site,)
+
+    jr.write_data(jr.encode_x(X), file_name_sol_path)
+    print(int(co.total_cost(X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000))
+'''
+
+'''
     for i in range(10):
         fix_c, fix_d, fix_a = fix_var(X, 4, 0, prediction[nb_client:])
         #set_super_client = glouton_super_client(2, 0.5, clients, parameters, True)
@@ -384,3 +476,4 @@ if __name__ == "__main__":
         if(cout_before-cout_after>0):
             X = new_X
         jr.write_data(jr.encode_x(new_X), file_name_sol_path+str(i))
+    '''

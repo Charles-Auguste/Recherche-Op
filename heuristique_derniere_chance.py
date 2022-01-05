@@ -44,6 +44,22 @@ def norm(coord1, coord2):
     value = np.sqrt(value)
     return value
 
+def re_allocation(liste_client: list, liste_site: list):
+    predictions = [0 for i in range(nb_client)]
+    numpy_siteClientDistances = np.asarray(siteClientDistances)
+    for i in range(nb_client):
+        j_min = np.argmin(numpy_siteClientDistances[:, i])
+        predictions[i] = j_min
+
+    list_super_site = []
+    for site in liste_site:
+        list_super_site.append(Super_site(site["id"], site["coordinates"], 0))
+
+    for i in range(len(predictions)):
+        list_super_site[predictions[i]].children.append(liste_client[i]["id"])
+    return list_super_site
+
+
 def link_shortest_client(liste_client: list, liste_site: list, parameters, siteClDist):
     set_client = liste_client.copy()
     list_super_site = []
@@ -138,7 +154,8 @@ if __name__ == "__main__":
     print(co.total_cost(X,parameters,clients,sites,siteSiteDistances,siteClientDistances)/10000)
     print(X)
     """
-    site_var = link_shortest_client(clients,sites,parameters, siteClientDistances)
+    #site_var = link_shortest_client(clients,sites,parameters, siteClientDistances)
+    site_var = re_allocation(clients,sites)
     show_client_site("blabla3.png",site_var)
     check_region(site_var,len(clients))
     X = build_solution_simple(site_var,len(sites), len(clients), clients, sites)
