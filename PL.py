@@ -176,12 +176,12 @@ def solution_pl(parameters, cli, sit, siteSit, siteCli, set_super_client=None, f
 
     # Au plus un batiment par site
     for id_site in range(nb_site):
-        if id_site not in fix_c.keys():
-            prob += (x_c[id_site] + x_d[id_site] <= 1)
+        #if id_site not in fix_c.keys():
+        prob += (x_c[id_site] + x_d[id_site] <= 1)
     # Automatisation seulement sur les centres de production
     for id_site in range(nb_site):
-        if id_site not in fix_c.keys():
-            prob += (x_a[id_site] <= x_c[id_site])
+        #if id_site not in fix_c.keys():
+        prob += (x_a[id_site] <= x_c[id_site])
     # Parents des centres de distribution (~unicité)
     for id_site in range(nb_site):
         prob += (lpSum(x_p[id_site]) == x_d[id_site])

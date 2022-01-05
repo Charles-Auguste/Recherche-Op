@@ -17,7 +17,7 @@ from itertools import cycle, islice
 
 # Données
 
-file = "KIRO-large"
+file = "KIRO-medium"
 
 file_name = file + ".json"
 file_name_path = "instances/" + file_name
@@ -36,7 +36,7 @@ print("nb_sites = ", nb_site)
 if file == "KIRO-large":
     nb_cluster = 6  # idee max 10 sites par cluster
 elif file == "KIRO-medium":
-    nb_cluster = 4
+    nb_cluster = 3
 else:
     nb_cluster = 3
 print("nb_clusters = ", nb_cluster)
@@ -293,9 +293,33 @@ def solution_reconstruction(subX, list_id_client, list_id_site):
     return [x_production, x_distribution, x_auto, x_parent, x_client]
 
 
-def fix_var(X, nb_site_non_fix, nb_client_non_fix):
+def fix_var(X, nb_site_non_fix, nb_client_non_fix, predictions_site):
     tirage_liste = [i for i in range(nb_site)]
     index_liste = np.random.choice(tirage_liste, nb_site - nb_site_non_fix, replace=False)
+
+    foo = False
+    while(foo==False):
+        index_liste = []
+        tirage_liste_2 = [i for i in range(nb_site)]
+        tirage2 = np.random.choice(tirage_liste_2)
+        numpySi = np.asarray(siteSiteDistances)
+        numpyS = numpySi[:, tirage2]
+
+        k = nb_site_non_fix
+        idx = np.argpartition(numpyS, k)
+        index_liste_non_fix = idx[:k]
+        print(numpyS[index_liste_non_fix])
+        n_predictions_site = np.asarray(predictions_site)
+        predictions_site_non_fixe = n_predictions_site[index_liste_non_fix]
+        count = np.unique(predictions_site_non_fixe, return_counts=True)[1]
+        print(count)
+        print(predictions_site_non_fixe)
+        if(len(count) > 1):
+            foo = True
+        for i in range(nb_site):
+            if i not in index_liste_non_fix:
+                index_liste.append(i)
+
     fix_c = dict()
     fix_d = dict()
     fix_a = dict()
@@ -310,7 +334,7 @@ def fix_var(X, nb_site_non_fix, nb_client_non_fix):
 
 if __name__ == "__main__":
     os.makedirs(name_dir, exist_ok=True)
-    best_solution_known_file = "best_solution/" + "depart.json"
+    best_solution_known_file = "best_solution/" + "37_2_3746.json"
     try:
         X = jr.decode(best_solution_known_file, nb_site)
         print("solution trouvee")
@@ -335,8 +359,28 @@ if __name__ == "__main__":
         print("Coût de la solution optimale : ")
         print(int(co.total_cost(X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000))
 
-    fix_c, fix_d, fix_a = fix_var(X, nb_non_fix=1)
-    new_X = pl.solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistances, fix_c=fix_c, fix_d=fix_d,
-                           fix_a=fix_a)
     print("Coût de la solution optimale : ")
     print(int(co.total_cost(X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000))
+    cout_before = int(co.total_cost(X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000)
+
+    list_client_coord = get_liste_coord(clients)
+    list_site_coord = get_liste_coord(sites)
+
+    prediction = clustering(nb_cluster, list_client_coord, list_site_coord)
+    prediction = re_allocation(prediction)
+
+    for i in range(10):
+        fix_c, fix_d, fix_a = fix_var(X, 4, 0, prediction[nb_client:])
+        #set_super_client = glouton_super_client(2, 0.5, clients, parameters, True)
+        #link_distribution(set_super_client, sites, 1)
+        new_X = pl.solution_pl(parameters, clients, sites, siteSiteDistances, siteClientDistances, fix_c=fix_c, fix_d=fix_d,
+                               fix_a=fix_a)
+        print("Coût de la solution optimale : ")
+        print(int(co.total_cost(new_X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000))
+        cout_after = int(co.total_cost(new_X, parameters, clients, sites, siteSiteDistances, siteClientDistances) / 10000)
+
+        print(cout_before-cout_after)
+
+        if(cout_before-cout_after>0):
+            X = new_X
+        jr.write_data(jr.encode_x(new_X), file_name_sol_path+str(i))
