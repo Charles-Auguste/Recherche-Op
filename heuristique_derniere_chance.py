@@ -44,6 +44,7 @@ def norm(coord1, coord2):
     value = np.sqrt(value)
     return value
 
+
 def re_allocation(liste_client: list, liste_site: list):
     predictions = [0 for i in range(nb_client)]
     numpy_siteClientDistances = np.asarray(siteClientDistances)
@@ -56,7 +57,18 @@ def re_allocation(liste_client: list, liste_site: list):
         list_super_site.append(Super_site(site["id"], site["coordinates"], 0))
 
     for i in range(len(predictions)):
-        list_super_site[predictions[i]].children.append(liste_client[i]["id"])
+        if(list_super_site[predictions[i]].demand < 2500000):
+            list_super_site[predictions[i]].children.append(liste_client[i]["id"])
+            list_super_site[predictions[i]].demand += liste_client[i]["demand"]
+        else:
+            numpySi = np.asarray(siteClientDistances)
+            numpyS = numpySi[:, i]
+
+            k = 2
+            idx = np.argpartition(numpyS, k)
+            idx_2eme_site_plus_proche = idx[:k][1]
+            list_super_site[idx_2eme_site_plus_proche].children.append(liste_client[i]["id"])
+            list_super_site[idx_2eme_site_plus_proche].demand += liste_client[i]["demand"]
     return list_super_site
 
 
