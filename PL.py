@@ -133,6 +133,12 @@ def solution_pl(parameters, cli, sit, siteSit, siteCli, set_super_client=None, f
     nb_site = len(sites)
     nb_client = len(clients)
 
+    # TEST de demande max...
+    total_demand = 0
+    for client in clients:
+        total_demand += client["demand"]
+    print("TOTAL DEMAND : ", total_demand)
+
     # sites de construction
     x_c = [LpVariable("x_construction_" + str(i), lowBound=0, upBound=1, cat=LpInteger) for i in range(nb_site)]
     # sites de distribution

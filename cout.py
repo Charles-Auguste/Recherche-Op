@@ -62,4 +62,8 @@ def total_cost(x, parameters, clients, sites, siteSiteDistances, siteClientDista
     cost += production_cost(x,parameters,clients,nb_client,nb_site)
     cost += routing_cost(x,parameters,clients,siteClientDistances,siteSiteDistances,nb_client,nb_site)
     cost += capacity_cost(x,parameters,clients,nb_client,nb_site)
+    print("building cost : ", building_cost(x,parameters,nb_site)/10000)
+    print("production cost : ", production_cost(x,parameters,clients,nb_client,nb_site) / 10000)
+    print("routing cost : ", routing_cost(x,parameters,clients,siteClientDistances,siteSiteDistances,nb_client,nb_site) / 10000)
+    print("capacity cost : ", capacity_cost(x,parameters,clients,nb_client,nb_site) / 10000)
     return cost

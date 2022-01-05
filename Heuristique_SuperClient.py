@@ -61,7 +61,7 @@ import cout as co
 
 # Données
 
-file = "KIRO-medium"
+file = "KIRO-large"
 
 file_name = file + ".json"
 file_name_path = "instances/" + file_name
@@ -237,14 +237,19 @@ def create_solution(parameters, client, sites, set_super):
 # Ajuster la solution à tous les clients
 
 if __name__ == "__main__":
+
     os.makedirs(name_dir, exist_ok=True)
-    set_super_client = glouton_super_client(2, 0.5, clients, parameters, True)
+    set_super_client = glouton_super_client(2, 0, clients, parameters, True)
     link_distribution(set_super_client, sites, 1)
     show_client_site(name_dir)
     show_super_client(set_super_client, sites, name_dir)
     # X = create_solution(parameters,clients,sites,set_super_client)
+    """
     X = pl.solution_pl(parameters,clients,sites,siteSiteDistances,siteClientDistances, set_super_client)
     pl.check_constraint(X,len(sites), len(clients))
     jr.write_data(jr.encode_x(X),file_name_sol_path)
     print(co.total_cost(X,parameters,clients,sites,siteSiteDistances,siteClientDistances)/10000)
     print(X)
+    """
+
+
