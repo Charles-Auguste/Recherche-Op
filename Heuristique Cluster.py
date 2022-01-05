@@ -17,7 +17,7 @@ from itertools import cycle, islice
 
 # Données
 
-file = "KIRO-large"
+file = "KIRO-medium"
 
 file_name = file + ".json"
 file_name_path = "instances/" + file_name
@@ -36,7 +36,7 @@ print("nb_sites = ", nb_site)
 if file == "KIRO-large":
     nb_cluster = 6  # idee max 10 sites par cluster
 elif file == "KIRO-medium":
-    nb_cluster = 3
+    nb_cluster = 2
 else:
     nb_cluster = 3
 print("nb_clusters = ", nb_cluster)
@@ -407,7 +407,7 @@ def fix_var(X, nb_site_non_fix, nb_client_non_fix, predictions_site):
 
 if __name__ == "__main__":
     os.makedirs(name_dir, exist_ok=True)
-    best_solution_known_file = "best_solution/" + "depart3abc.json"
+    best_solution_known_file = "best_solution/" + "dhhguepart3abc.json"
     try:
         X = jr.decode(best_solution_known_file, nb_site)
         print("solution trouvee")
@@ -418,7 +418,7 @@ if __name__ == "__main__":
 
         prediction = clustering(nb_cluster, list_client_coord, list_site_coord)
         prediction = re_allocation(prediction)
-        prediction,subprob = re_allocation_a_la_main(prediction)
+        # prediction,subprob = re_allocation_a_la_main(prediction)
         list_sub_clients, list_sub_sites, list_sub_siteSiteDistances, list_sub_siteClientDistances, list_index_client, list_index_site = get_sub_problem(
             prediction)
         # show_client_site(name_dir)

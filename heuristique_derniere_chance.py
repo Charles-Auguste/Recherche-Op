@@ -167,16 +167,47 @@ def build_solution_simple(site_var_f,nb_sit, nb_clien, list_clien, list_sit):
             X_client[id_child - 1][site.id - 1] = 1
 
     site_demand_trie = sorted(site_var_f, key=lambda site: site.demand)
-    for i in range(15):
+    # 15 pour large
+    # 20 pour petit
+    seuil_site_pas_auto = 15
+    for i in range(seuil_site_pas_auto):
         X_prod[site_demand_trie[i].id - 1] = 1
         X_distr[site_demand_trie[i].id - 1] = 0
         X_auto[site_demand_trie[i].id - 1] = 0
+        children = site_demand_trie[i].children
+
+        for id_child in children:
+            numpy_siteClientDistance = np.asarray(siteClientDistances)
+            numpyS = numpy_siteClientDistance[:, id_child - 1]
+            k = 3
+            idx = np.argpartition(numpyS, k)
+            idx = idx[:k]
+            idx_2eme_site_plus_proche = idx[2]
+            rayon = 28
+            print("yeah")
+            print(np.abs(numpyS[idx[0]] - numpyS[idx[1]]))
+            if(np.abs(numpyS[idx[0]] - numpyS[idx[1]]) < rayon):
+                print("encore papa")
+                for k in range(nb_site):
+                    X_client[id_child - 1][k] = 0
+                X_client[id_child - 1][idx[1]] = 1
+            
+
+    # TENTATIVE POUR AJOUTER DISTRIBUTEUR
+    ''' 
     numpy_siteSiteDistance = np.asarray(siteSiteDistances)
-    numpyS = numpy_siteSiteDistance[:, 13]
-    k = 2
+    numpyS = numpy_siteSiteDistance[:, site_demand_trie[16].id -1]
+    k = 3
     idx = np.argpartition(numpyS, k)
-    idx_2eme_site_plus_proche = idx[:k][1]
-    X_parent[13][idx_2eme_site_plus_proche] = 0
+    idx_2eme_site_plus_proche = idx[:k][2]
+    X_prod[site_demand_trie[16].id - 1] = 0
+    X_distr[site_demand_trie[16].id - 1] = 1
+    X_auto[site_demand_trie[16].id - 1] = 0
+    X_parent[site_demand_trie[16].id -1][idx_2eme_site_plus_proche] = 1
+    print("====")
+    print("auto?", X_auto[idx_2eme_site_plus_proche])
+    print("====")
+    '''
     return ([X_prod,X_distr,X_auto,X_parent,X_client])
 
 
