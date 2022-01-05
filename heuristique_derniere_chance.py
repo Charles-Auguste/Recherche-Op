@@ -57,11 +57,12 @@ def re_allocation(liste_client: list, liste_site: list):
         list_super_site.append(Super_site(site["id"], site["coordinates"], 0))
 
     for i in range(len(predictions)):
-        if(list_super_site[predictions[i]].demand < 2500000):
+        if(list_super_site[predictions[i]].demand + liste_client[i]["demand"] < 2500000):
             list_super_site[predictions[i]].children.append(liste_client[i]["id"])
             list_super_site[predictions[i]].demand += liste_client[i]["demand"]
         else:
-            numpySi = np.asarray(siteClientDistances)
+            '''
+            numpy_siteClientDistances = np.asarray(siteClientDistances)
             numpyS = numpySi[:, i]
 
             k = 2
@@ -69,6 +70,23 @@ def re_allocation(liste_client: list, liste_site: list):
             idx_2eme_site_plus_proche = idx[:k][1]
             list_super_site[idx_2eme_site_plus_proche].children.append(liste_client[i]["id"])
             list_super_site[idx_2eme_site_plus_proche].demand += liste_client[i]["demand"]
+            
+                '''
+            numpyS = numpy_siteClientDistances[:, i]
+            k = 2
+            idx = np.argpartition(numpyS, k)
+            idx_2eme_site_plus_proche = idx[:k][1]
+            list_super_site[idx_2eme_site_plus_proche].children.append(liste_client[i]["id"])
+            list_super_site[idx_2eme_site_plus_proche].demand += liste_client[i]["demand"]
+            if (list_super_site[idx_2eme_site_plus_proche].demand + liste_client[i]["demand"] < 2500000):
+                list_super_site[idx_2eme_site_plus_proche].children.append(liste_client[i]["id"])
+                list_super_site[idx_2eme_site_plus_proche].demand += liste_client[i]["demand"]
+            else:
+                k = 3
+                idx = np.argpartition(numpyS, k)
+                idx_3eme_site_plus_proche = idx[:k][2]
+                list_super_site[idx_3eme_site_plus_proche].children.append(liste_client[i]["id"])
+                list_super_site[idx_3eme_site_plus_proche].demand += liste_client[i]["demand"]
     return list_super_site
 
 
@@ -149,6 +167,9 @@ def build_solution_simple(site_var_f,nb_sit, nb_clien, list_clien, list_sit):
     for site in site_var_f:
         for id_child in site.children:
             X_client[id_child - 1][site.id - 1] = 1
+    X_prod[13] = 0
+    X_distr[13] = 1
+    X_auto[13] = 0
     return ([X_prod,X_distr,X_auto,X_parent,X_client])
 
 
