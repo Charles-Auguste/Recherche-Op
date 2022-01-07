@@ -58,23 +58,24 @@ import PL as pl
 import os as os
 from datetime import datetime
 import cout as co
+import time
 
 # Données
 
-file = "KIRO-large"
+file = "KIRO-small"
 
 file_name = file + ".json"
 file_name_path = "instances/" + file_name
 file_name_sol = "sol-" + file_name
-name_dir = "solution/" + file + "___Super_client___" + str(datetime.now().date()) + "___" + str(
+name_dir = "solution/" + file + "___SOL_SMALL___" + str(datetime.now().date()) + "___" + str(
     datetime.now().hour) + "_" + str(datetime.now().minute) + "_" + str(datetime.now().second)
 file_name_sol_path = name_dir + "/" + file_name_sol
 
 parameters, clients, sites, siteSiteDistances, siteClientDistances = jr.read_data(file_name_path)
 nb_client = len(clients)
 nb_site = len(sites)
-# print("nb_clients = ", nb_client)
-# print("nb_sites = ", nb_site)
+print("nb_clients = ", nb_client)
+print("nb_sites = ", nb_site)
 
 
 # Super Client
@@ -173,6 +174,42 @@ def show_client_site(name):
     plt.savefig(name + '/Repartition_normale.png')
     plt.show()
 
+def show_solution(name,X):
+    for id_client in range(nb_client):
+        for id_site_pere in range(nb_site):
+            if X[4][id_client][id_site_pere] == 1:
+                x=[clients[id_client]["coordinates"][0],sites[id_site_pere]["coordinates"][0]]
+                y = [clients[id_client]["coordinates"][1], sites[id_site_pere]["coordinates"][1]]
+                plt.plot(x,y, color="grey", linewidth=0.5)
+
+    for id_site_fils in range(nb_site):
+        for id_site_pere in range(nb_site):
+            if X[3][id_site_fils][id_site_pere] == 1:
+                x=[sites[id_site_fils]["coordinates"][0],sites[id_site_pere]["coordinates"][0]]
+                y = [sites[id_site_fils]["coordinates"][1], sites[id_site_pere]["coordinates"][1]]
+                plt.plot(x,y, color="black")
+
+    for id_client in range(nb_client):
+        plt.plot(clients[id_client]["coordinates"][0],clients[id_client]["coordinates"][1], color="grey", marker="o",markersize=3)
+
+    for id_site in range(nb_site):
+        if X[0][id_site] == 1:
+            if X[2][id_site] == 1:
+                plt.plot(sites[id_site]["coordinates"][0],sites[id_site]["coordinates"][1], color='red', marker ="o",markersize=12)
+            else:
+                plt.plot(sites[id_site]["coordinates"][0], sites[id_site]["coordinates"][1], color='orange', marker="o",markersize=12)
+        elif X[1][id_site] == 1:
+            plt.plot(sites[id_site]["coordinates"][0],sites[id_site]["coordinates"][1], color='green', marker ="o",markersize=12)
+        else:
+            plt.plot(sites[id_site]["coordinates"][0], sites[id_site]["coordinates"][1], color='grey', marker="o",markersize=12)
+
+
+    plt.title('Solution trouvée')
+    plt.xlabel('x')
+    plt.ylabel('y')
+
+    plt.savefig(name + '/solution.png')
+    plt.show()
 
 def show_super_client(set_super, sites, name):
     x1, x2 = [], []
@@ -239,17 +276,16 @@ def create_solution(parameters, client, sites, set_super):
 if __name__ == "__main__":
 
     os.makedirs(name_dir, exist_ok=True)
-    set_super_client = glouton_super_client(2, 0, clients, parameters, True)
-    link_distribution(set_super_client, sites, 1)
     show_client_site(name_dir)
-    show_super_client(set_super_client, sites, name_dir)
     # X = create_solution(parameters,clients,sites,set_super_client)
-    """
-    X = pl.solution_pl(parameters,clients,sites,siteSiteDistances,siteClientDistances, set_super_client)
+    start = time.time()
+    X = pl.solution_pl(parameters,clients,sites,siteSiteDistances,siteClientDistances)
+    end = time.time()
+    print("The programm run in ", end - start, " seconds")
     pl.check_constraint(X,len(sites), len(clients))
     jr.write_data(jr.encode_x(X),file_name_sol_path)
     print(co.total_cost(X,parameters,clients,sites,siteSiteDistances,siteClientDistances)/10000)
+    show_solution(name_dir,X)
     print(X)
-    """
 
 
